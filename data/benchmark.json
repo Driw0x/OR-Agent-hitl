@@ -1,0 +1,109 @@
+{
+  "protocol_version": "1",
+  "cases": [
+    {
+      "id": "dev_small_feasible", "split": "dev", "family": "dev_small_assignment", "category": "feasible",
+      "source": "Assign tasks T1, T2, T3 exactly once to resources R1 or R2, minimizing total assignment cost in credit. Resource usage and capacity use slot. In task order T1,T2,T3, the costs for R1 are 2,8,3 and for R2 are 5,1,4. Every task consumes 2 slot on either resource. The cumulative capacities of R1 and R2 are 4 and 2 slot respectively. There are no other constraints.",
+      "disposition": "ready",
+      "problem": {"tasks": ["T1", "T2", "T3"], "resources": ["R1", "R2"], "costs": [[2,8,3],[5,1,4]], "consumption": [[2,2,2],[2,2,2]], "capacities": [4,2], "cost_unit": "credit", "resource_unit": "slot"},
+      "reference_optimum": 6, "reference_feasible_count": 3
+    },
+    {
+      "id": "dev_small_infeasible", "split": "dev", "family": "dev_small_assignment", "category": "infeasible",
+      "source": "Assign tasks T1, T2, T3 exactly once to resources R1 or R2, minimizing total assignment cost in credit. Resource usage and capacity use slot. In task order T1,T2,T3, costs for R1 are 2,8,3 and for R2 are 5,1,4. Each task consumes 2 slot on either resource. R1 and R2 each have cumulative capacity 1 slot. There are no other constraints; do not increase capacities if assignment is impossible.",
+      "disposition": "ready",
+      "problem": {"tasks": ["T1", "T2", "T3"], "resources": ["R1", "R2"], "costs": [[2,8,3],[5,1,4]], "consumption": [[2,2,2],[2,2,2]], "capacities": [1,1], "cost_unit": "credit", "resource_unit": "slot"},
+      "reference_optimum": null, "reference_feasible_count": 0
+    },
+    {
+      "id": "dev_tied", "split": "dev", "family": "dev_symmetric_pair", "category": "multiple_optima",
+      "source": "Affecter chacune des taches U,V exactement une fois aux ressources A,B. Minimiser le cout total en euro. Chaque affectation coute 1 euro et consomme 1 place, pour chacune des quatre paires possibles. A et B disposent chacune d'une capacite cumulee de 1 place. Aucune autre contrainte.",
+      "disposition": "ready",
+      "problem": {"tasks": ["U", "V"], "resources": ["A", "B"], "costs": [[1,1],[1,1]], "consumption": [[1,1],[1,1]], "capacities": [1,1], "cost_unit": "euro", "resource_unit": "place"},
+      "reference_optimum": 2, "reference_feasible_count": 2
+    },
+    {
+      "id": "dev_ambiguous", "split": "dev", "family": "dev_capacity_semantics", "category": "ambiguous",
+      "source": "Assign jobs Wash and Dry once each to machines Left and Right and minimize cost in credit. Costs for Left in job order Wash,Dry are 3,7; costs for Right are 6,2. Each job uses 2 slot on either machine. Both machines have capacity 3 slot, but the author does not know whether that limit applies to the sum of assigned jobs or separately to each job. Ask which interpretation is intended.",
+      "disposition": "clarify", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "dev_incomplete", "split": "dev", "family": "dev_missing_capacity", "category": "incomplete",
+      "source": "Assign tasks Scan and Print exactly once to resources North and South. Minimize assignment cost in coin. Costs for North, in task order Scan,Print, are 4,6; for South they are 2,8. Usage in slot is 1,2 for North and 2,1 for South. The cumulative resource capacities have not been supplied. Do not invent them.",
+      "disposition": "clarify", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "dev_unsupported", "split": "dev", "family": "dev_precedence", "category": "unsupported",
+      "source": "Assign tasks Load and Seal once each to resources ArmA and ArmB, minimizing cost in credit. In task order Load,Seal, ArmA costs 2,5 and ArmB costs 4,3. Every pair consumes 1 slot; both cumulative capacities are 2 slot. Also construct start times enforcing that Load finishes before Seal starts. This precedence and scheduling constraint is mandatory.",
+      "disposition": "unsupported", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "dev_invalid_cost", "split": "dev", "family": "dev_conflicting_pair_cost", "category": "invalid",
+      "source": "Assign task Check exactly once to resource Fixed and minimize cost in credit. The authoritative specification simultaneously states that the cost of assigning Check to Fixed is exactly 2 credit and exactly 9 credit. Neither statement supersedes the other; these values contradict each other. Consumption is 1 slot and the cumulative capacity of Fixed is 3 slot. Do not select a preferred cost or discard either statement.",
+      "disposition": "invalid", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "test_binding", "split": "test", "family": "test_three_resource_capacity", "category": "binding_capacities",
+      "source": "Affecter les taches Alpha,Beta,Gamma,Delta chacune exactement une fois aux ressources Oak,Pine,Elm et minimiser le cout total en point. Dans cet ordre de taches, les couts sont 4,9,3,8 pour Oak; 7,2,6,4 pour Pine; 6,5,6,1 pour Elm. Les consommations en unite sont 2,3,2,3 pour Oak; 3,2,3,2 pour Pine; 2,2,2,2 pour Elm. Les capacites cumulees en unite sont Oak=3, Pine=4, Elm=2. Aucune autre contrainte.",
+      "disposition": "ready",
+      "problem": {"tasks": ["Alpha", "Beta", "Gamma", "Delta"], "resources": ["Oak", "Pine", "Elm"], "costs": [[4,9,3,8],[7,2,6,4],[6,5,6,1]], "consumption": [[2,3,2,3],[3,2,3,2],[2,2,2,2]], "capacities": [3,4,2], "cost_unit": "point", "resource_unit": "unite"},
+      "reference_optimum": 15, "reference_feasible_count": 2
+    },
+    {
+      "id": "test_greedy_trap", "split": "test", "family": "test_cross_assignment", "category": "greedy_trap",
+      "source": "Assign tasks First and Second exactly once to resources Red or Blue, minimizing total cost in token. Red costs 0 token for First and 1 token for Second. Blue costs 1 token for First and 100 token for Second. Every task consumes 1 seat on either resource. Each resource has cumulative capacity 1 seat. There are no other constraints.",
+      "disposition": "ready",
+      "problem": {"tasks": ["First", "Second"], "resources": ["Red", "Blue"], "costs": [[0,1],[1,100]], "consumption": [[1,1],[1,1]], "capacities": [1,1], "cost_unit": "token", "resource_unit": "seat"},
+      "reference_optimum": 2, "reference_feasible_count": 2
+    },
+    {
+      "id": "test_negative_zero", "split": "test", "family": "test_rebates_zero_usage", "category": "negative_zero",
+      "source": "Affecter les taches Reuse,Inspect,Ship exactement une fois aux ressources Cold,Hot. Minimiser le cout total en credit; les couts negatifs sont des remboursements et doivent etre conserves. Dans cet ordre, Cold coute -4,0,3 et Hot coute 2,-2,-1. Les consommations en slot sont 0,0,1 pour Cold et 1,0,0 pour Hot. Capacites cumulees: Cold=0 slot et Hot=1 slot. Une consommation nulle est autorisee, sans autre contrainte.",
+      "disposition": "ready",
+      "problem": {"tasks": ["Reuse", "Inspect", "Ship"], "resources": ["Cold", "Hot"], "costs": [[-4,0,3],[2,-2,-1]], "consumption": [[0,0,1],[1,0,0]], "capacities": [0,1], "cost_unit": "credit", "resource_unit": "slot"},
+      "reference_optimum": -7, "reference_feasible_count": 4
+    },
+    {
+      "id": "test_multiple", "split": "test", "family": "test_partial_symmetry_three", "category": "multiple_optima",
+      "source": "Assign tasks Paint,Polish,Pack once each to resources East,West,Center, minimizing cost in coin. In task order Paint,Polish,Pack, East costs 2,2,8; West costs 2,2,8; Center costs 9,9,1. Each task consumes 1 place on every resource. East,West,Center each have cumulative capacity 1 place. There are no other constraints. Any minimum-cost assignment is acceptable.",
+      "disposition": "ready",
+      "problem": {"tasks": ["Paint", "Polish", "Pack"], "resources": ["East", "West", "Center"], "costs": [[2,2,8],[2,2,8],[9,9,1]], "consumption": [[1,1,1],[1,1,1],[1,1,1]], "capacities": [1,1,1], "cost_unit": "coin", "resource_unit": "place"},
+      "reference_optimum": 5, "reference_feasible_count": 6
+    },
+    {
+      "id": "test_infeasible_packing", "split": "test", "family": "test_indivisible_packing", "category": "infeasible",
+      "source": "Affecter les quatre taches P,Q,S,T chacune exactement une fois a une des trois ressources X,Y,Z. Minimiser le cout total en euro. Dans l'ordre P,Q,S,T, X coute 3,4,5,6; Y coute 6,2,4,3; Z coute 5,7,1,2. Chaque paire tache-ressource consomme 2 bloc. Chaque ressource dispose d'une capacite cumulee de 3 bloc. Les taches sont indivisibles et toutes obligatoires. Aucune autre contrainte.",
+      "disposition": "ready",
+      "problem": {"tasks": ["P", "Q", "S", "T"], "resources": ["X", "Y", "Z"], "costs": [[3,4,5,6],[6,2,4,3],[5,7,1,2]], "consumption": [[2,2,2,2],[2,2,2,2],[2,2,2,2]], "capacities": [3,3,3], "cost_unit": "euro", "resource_unit": "bloc"},
+      "reference_optimum": null, "reference_feasible_count": 0
+    },
+    {
+      "id": "test_ambiguous_units", "split": "test", "family": "test_uncertain_unit_conversion", "category": "ambiguous",
+      "source": "Assign tasks Mix and Filter once each to resources VesselA,VesselB and minimize cost in euro. Costs in task order Mix,Filter are 2,6 for VesselA and 4,1 for VesselB. Cumulative capacities are 3 kilogram for VesselA and 4 kilogram for VesselB. Consumption values are 2,3 for VesselA and 1,2 for VesselB, but the worksheet does not say whether those consumption values are kilogram or litre. No density or conversion rule is given. Ask for the missing unit convention; do not assume that litre equals kilogram.",
+      "disposition": "clarify", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "test_incomplete_costs", "split": "test", "family": "test_missing_pair_cost", "category": "incomplete",
+      "source": "Affecter les taches Cut,Fold,Label une fois chacune aux ressources BenchA,BenchB et minimiser le cout en centime. BenchA coute respectivement 7,3,8 centime. BenchB coute 4 centime pour Cut et 6 centime pour Fold; le cout de Label sur BenchB manque. Les consommations en slot pour Cut,Fold,Label sont 2,1,2 sur BenchA et 1,2,1 sur BenchB. Capacites cumulees: BenchA=8 slot, BenchB=6 slot. Ne pas inventer le cout manquant.",
+      "disposition": "clarify", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "test_unsupported_deadline", "split": "test", "family": "test_absolute_deadline", "category": "unsupported",
+      "source": "Assign tasks J1,J2 once each to resources CellA,CellB, minimizing cost in credit. In task order J1,J2, CellA costs 3,4 and CellB costs 6,1. Every assignment consumes 2 slot, and each resource has cumulative capacity 2 slot. A mandatory additional constraint requires J1 to finish by time 5 seconds. Scheduling start and finish times is part of this request; the deadline cannot be ignored.",
+      "disposition": "unsupported", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    },
+    {
+      "id": "test_invalid_dimensions", "split": "test", "family": "test_contradictory_matrix", "category": "invalid",
+      "source": "There are exactly two resources D1,D2 and exactly two tasks Q1,Q2. Assign each task once and minimize cost in coin. The supplied cost table explicitly has three resource rows (1,2), (3,4), (5,6), claimed to be in the order D1,D2. This contradicts the declared resource count. The consumption rows for D1,D2 are (1,2) and (2,1) slot; capacities are D1=3 slot,D2=4 slot. These are the supplied data as written; do not delete a cost row or invent a third resource.",
+      "disposition": "invalid", "problem": null,
+      "reference_optimum": null, "reference_feasible_count": null
+    }
+  ]
+}
