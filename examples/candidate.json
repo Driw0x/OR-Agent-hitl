@@ -1,0 +1,8 @@
+{
+  "assignments": [
+    {"task": "T1", "resource": "R1"},
+    {"task": "T2", "resource": "R2"},
+    {"task": "T3", "resource": "R1"}
+  ],
+  "objective": 6
+}
