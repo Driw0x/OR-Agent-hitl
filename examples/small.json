@@ -1,0 +1,9 @@
+{
+  "tasks": ["T1", "T2", "T3"],
+  "resources": ["R1", "R2"],
+  "costs": [[2, 8, 3], [5, 1, 4]],
+  "consumption": [[2, 2, 2], [2, 2, 2]],
+  "capacities": [4, 2],
+  "cost_unit": "credit",
+  "resource_unit": "slot"
+}

@@ -1,0 +1,36 @@
+{
+  "tasks": [
+    "A",
+    "B"
+  ],
+  "resources": [
+    "X",
+    "Y"
+  ],
+  "costs": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "consumption": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "capacities": [
+    1,
+    1
+  ],
+  "cost_unit": "credit",
+  "resource_unit": "slot"
+}
