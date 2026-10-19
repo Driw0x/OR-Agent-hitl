@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "or-agent"
+version = "1.0.0"
+description = "Bounded GAP formulation, solving and independent verification"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["pydantic>=2.10,<3", "ortools>=9.12,<10"]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+or-agent = "or_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["or_agent*"]
+
+[tool.setuptools.package-data]
+or_agent = ["web_assets/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--basetemp=.pytest-tmp"
