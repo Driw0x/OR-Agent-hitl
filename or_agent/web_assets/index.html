@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OR-Agent · Atelier de résolution</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top"><a href="/" class="brand">OR<span> / </span>Agent</a><span class="local">Local · GAP uniquement</span></header>
+<main>
+  <div class="intro"><p class="eyebrow">RECHERCHE OPÉRATIONNELLE / ATELIER LOCAL</p><h1>De l’énoncé<br> à l’affectation vérifiée.</h1><p>Analyse déterministe, revue humaine si nécessaire, résolution CP-SAT.<br> Chaque étape reste visible, chaque résultat garde sa preuve.</p></div>
+  <div id="error" role="alert" hidden></div>
+  <section id="history" class="panel" hidden><div class="section-head"><h2>Sessions enregistrées</h2><button id="closeHistory" class="quiet">Fermer</button></div><p>Consultation sans relancer le modèle ou le solveur. Les imports créent une copie de revue sans approbation.</p><div id="sessionList"></div><div id="importList"></div></section>
+  <div class="session-actions"><button id="sessionsButton" class="quiet">Sessions</button></div>
+  <div class="workspace">
+    <div class="content">
+      <section class="panel input-panel"><div class="section-head"><h2><span class="step-number">01</span> Votre problème</h2><span id="counter" class="muted">0 / 8 000</span></div>
+        <label for="source">Énoncé libre ou données structurées</label>
+        <textarea id="source" maxlength="8000" rows="9" placeholder="Je dispose de deux machines A et B, avec des capacités de cinq et quatre heures…"></textarea>
+        <p class="hint">GAP : tâches indivisibles, affectation exactement une fois, capacités cumulatives, coût total minimal. Entiers et unités explicites. Routage et ordonnancement exclus.</p>
+        <div class="actions"><button id="analyze" class="primary">Lancer l’analyse <span aria-hidden="true">↗</span></button><button id="example">Exemple autonome −5</button><button id="proseExample">Exemple libre</button><button id="reset" class="quiet">Réinitialiser</button></div>
+      </section>
+      <section id="sessionPanel" class="panel" hidden><div class="section-head"><h2><span class="step-number">02</span> Analyse et routage</h2><span id="branch" class="badge"></span></div><p id="mode"></p><p class="session-id">Session <code id="sessionId"></code> · <span id="streamState">Connexion…</span></p><div id="s2"></div><details><summary>Preuves source, certificat et empreintes</summary><pre id="technical"></pre></details></section>
+      <section id="llmPanel" class="panel" hidden><div class="section-head"><h2>Génération de la proposition</h2><span class="badge">qwen2.5-coder:7b</span></div><p>Un seul appel sur demande. Affichage de la sortie finale réelle, sans faux streaming. Les données générées restent à vérifier.</p><button id="generate">Demander une proposition Ollama</button><p id="generationStatus" role="status"></p><details open><summary>Sortie brute exacte</summary><pre id="raw">Aucune sortie disponible.</pre></details><details><summary>Diagnostics de génération</summary><pre id="generationDetails"></pre></details></section>
+      <section id="reviewPanel" class="panel" hidden><div class="section-head"><h2><span class="step-number">03</span> Revue humaine</h2><span id="approvalState" class="badge"></span></div><p>Comparez chaque donnée à l’énoncé original et aux faits extraits. Vérifiez unités, coûts, consommations et contraintes.</p><details open><summary>Énoncé original conservé</summary><pre id="original"></pre></details>
+        <label for="proposal">Proposition semi-structurée modifiable</label><textarea id="proposal" maxlength="8000" rows="16" spellcheck="false"></textarea><p id="dirtyNotice" class="warning" hidden>Modifications locales non enregistrées. Sauvegardez, puis recommencez la revue et les confirmations.</p>
+        <div class="actions"><button id="save">Enregistrer les modifications</button><button id="validate">Vérifier la proposition</button><button id="review">Effectuer la revue</button></div>
+        <div id="diagnostics" role="status"></div><div id="canonical"></div>
+        <div class="confirmation"><h3>Confirmer la portée du GAP</h3><p>Tâches obligatoires et indivisibles ; une ressource par tâche ; capacités cumulatives ; minimisation de la somme des coûts. Aucune autre contrainte. Cette confirmation ne prouve pas automatiquement la fidélité de la prose.</p><label class="check"><input id="scopeCheck" type="checkbox"> J’ai comparé l’énoncé et confirme cette portée pour la version affichée.</label><button id="scope">Confirmer la portée</button><p id="scopeState"></p></div>
+        <div class="confirmation"><h3>Approuver cette version exacte</h3><p>Les empreintes lient l’approbation à l’énoncé, la proposition et le GAP reconstruit. Toute modification exige une nouvelle confirmation. Le bouton enregistre votre approbation, puis lance la résolution de cette même version.</p><code id="fingerprint"></code><label class="check"><input id="approveCheck" type="checkbox"> J’approuve explicitement les données et contraintes de cette version.</label><div class="actions"><button id="solve" class="primary">Résoudre le GAP approuvé</button></div></div>
+        <details><summary>Rejeter la proposition</summary><label for="rejectReason">Motif obligatoire</label><input id="rejectReason" type="text" maxlength="8000"><button id="reject" class="danger">Rejeter cette session</button></details>
+      </section>
+      <section id="resultPanel" class="panel" hidden><div class="section-head"><h2><span class="step-number">04</span> Résultat et ressources</h2><span id="resultState" class="badge"></span></div><p id="historicalWarning" class="warning" hidden>Résultat historique : proposition modifiée ou approbation invalidée. Graphique courant et exports désactivés.</p><div id="resultSummary"></div><div id="exports" class="actions"><a id="svgExport" download="or-agent.svg">Exporter SVG</a><a id="htmlExport" target="_blank" rel="noopener">Ouvrir / enregistrer HTML</a><a id="jsonExport" download="result.json">Exporter JSON</a></div><iframe id="resultFrame" title="Graphe des affectations et utilisation des ressources" hidden></iframe><details><summary>Détails du résultat conservé</summary><pre id="resultDetails"></pre></details></section>
+    </div>
+    <aside class="panel timeline-panel"><div class="section-head"><h2>Fil d’exécution</h2><span id="activity" class="badge">Prêt</span></div><p class="hint">États et durées mesurés par le backend. Aucun pourcentage estimé.</p><ol id="timeline"></ol><details><summary>Journal des événements</summary><pre id="eventLog"></pre></details></aside>
+  </div>
+  <footer>OR-Agent · Expérimental · Les preuves mathématiques concernent le GAP reconstruit ou approuvé.</footer>
+</main>
+</body>
+</html>
