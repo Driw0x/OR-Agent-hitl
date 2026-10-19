@@ -1,0 +1,5 @@
+Assign each task T1, T2, T3 to exactly one resource R1 or R2 and minimize total cost.
+Cost unit: credit. Consumption and capacity unit: slot.
+In task order T1, T2, T3, costs for R1 are [2, 8, 3] and costs for R2 are [5, 1, 4].
+In the same order, consumption for R1 is [2, 2, 2] and for R2 is [2, 2, 2].
+Capacities are R1=4 and R2=2. No other constraints apply.
