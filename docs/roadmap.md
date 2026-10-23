@@ -1,126 +1,137 @@
-# OR-Agent — Roadmap et checkpoints de validation
+[English](roadmap.md) | [Français](roadmap.fr.md) | [简体中文](roadmap.zh-CN.md)
 
-[Français](roadmap.md) | [简体中文](roadmap.zh-CN.md)
+<a id="or-agent--roadmap-et-checkpoints-de-validation"></a>
+# OR-Agent - Roadmap and validation checkpoints
 
 
-Cette roadmap retrace les milestones et les checkpoints réalisés. Le [README](../README.md) présente le produit et son utilisation ; la [mémoire technique](memory.md) explique les choix d'implémentation.
 
-## M0 — Cadrage GAP
+This roadmap traces the milestones and checkpoints achieved. The [README](../README.md) presents the product and its usage; the [technical development log](memory.md) explains the implementation choices.
 
-Objectif : définir le contrat d'affectation sous capacités.
+<a id="m0--cadrage-gap"></a>
+## M0 - GAP scope
 
-- [x] Fixer l'affectation obligatoire, indivisible et unique de chaque tâche.
-- [x] Définir les coûts et consommations par couple tâche–ressource, les capacités et la minimisation du coût total.
-- [x] Fixer les bornes entières et les unités explicites, avec coûts négatifs et consommations nulles.
-- [x] Délimiter le GAP par rapport au routage, aux précédences et à l'ordonnancement.
-- [x] Distinguer validation du modèle, fidélité à la source, faisabilité et optimalité.
+Objective: define the assignment contract under capacity constraints.
 
-Validation : contrat implémenté dans [models.py](../or_agent/models.py), couvert par les tests de schéma et de résolution. **Statut : terminé.**
+- [x] Fix the mandatory, indivisible, and unique assignment of each task.
+- [x] Define costs and consumptions per task-resource pair, capacities, and total cost minimization.
+- [x] Set integer bounds and explicit units, with negative costs and zero consumptions.
+- [x] Distinguish GAP from routing, precedence, and scheduling.
+- [x] Distinguish model validation, fidelity to source, feasibility, and optimality.
 
-## M1 — Validation et représentation
+Validation: the contract implemented in [models.py](../or_agent/models.py), covered by schema and resolution tests. **Status: completed.**
 
-Objectif : représenter les données dans des modèles stricts et contrôlables.
+<a id="m1--validation-et-représentation"></a>
+## M1 - Validation and representation
 
-- [x] Implémenter les modèles fermés `Gap`, `Extraction` et `Candidate`.
-- [x] Contrôler identifiants, unicité, dimensions, domaine numérique et unités.
-- [x] Fixer les ressources en lignes et les tâches en colonnes dans les matrices.
-- [x] Exiger une provenance exacte pour chaque champ d'une extraction `ready`.
-- [x] Refuser les JSON ambigus, les données incomplètes et les champs inconnus.
+Objective: represent data in strict and controllable models.
 
-Validation : cas valides et refus couverts par [test_models.py](../tests/test_models.py). **Statut : terminé pour la validation structurelle.**
+- [x] Implement closed models `Gap`, `Extraction`, and `Candidate`.
+- [x] Control identifiers, uniqueness, dimensions, numeric domain, and units.
+- [x] Fix resources in rows and tasks in columns within matrices.
+- [x] Require exact provenance for each field in an extraction `ready`.
+- [x] Reject ambiguous JSON, incomplete data, and unknown fields.
 
-## M2 — Résolution CP-SAT
+Validation: valid and rejected cases covered by [test_models.py](../tests/test_models.py). **Status: completed for structural validation.**
 
-Objectif : convertir et résoudre le GAP fourni sous une limite de temps.
+<a id="m2--résolution-cp-sat"></a>
+## M2 - CP-SAT Solution
 
-- [x] Construire les variables binaires, l'affectation unique, les capacités et l'objectif entier.
-- [x] Conserver candidat, objectif, borne, version, paramètres et temps du solveur.
-- [x] Distinguer optimum prouvé, candidat faisable, infaisabilité, résultat inconclusif et erreur technique.
-- [x] Comparer de petits problèmes à l'énumération exhaustive et tester les limites numériques et temporelles.
+Objective: convert and solve the provided GAP within a time limit.
 
-Validation : conversion, statuts et références exhaustives couverts par [test_solver.py](../tests/test_solver.py). **Statut : terminé pour le GAP fourni.**
+- [x] Build binary variables, unique assignment, capacities, and integer objective.
+- [x] Preserve candidate, objective, bound, version, solver parameters, and solver runtime.
+- [x] Distinguish proven optimum, feasible candidate, infeasibility, inconclusive result, and technical error.
+- [x] Compare small problems against exhaustive enumeration and test numerical and temporal limits.
 
-## M3 — Vérification indépendante
+Validation: conversion, statuses, and references covered by [test_solver.py](../tests/test_solver.py). **Status: completed for the provided GAP.**
 
-Objectif : contrôler les affectations par un calcul séparé du solveur.
+<a id="m3--vérification-indépendante"></a>
+## M3 - Independent Verification
 
-- [x] Contrôler les identifiants, la couverture exacte des tâches et les doublons.
-- [x] Recalculer les charges entières et vérifier les capacités.
-- [x] Recalculer le coût et le comparer à l'objectif annoncé.
-- [x] Retourner des violations structurées et refuser les candidats mal formés.
-- [x] Tester omissions, doublons, ressources inconnues, dépassements et coûts corrompus.
+Objective: control assignments using a computation independent of the solver.
 
-Validation : corruptions injectées couvertes par [test_verify.py](../tests/test_verify.py). **Statut : terminé pour la faisabilité et le coût.**
+- [x] Control identifiers, exact task coverage, and duplicates.
+- [x] Recalculate integer loads and verify capacities.
+- [x] Recalculate cost and compare it to the announced objective.
+- [x] Return structured violations and reject malformed candidates.
+- [x] Test omissions, duplicates, unknown resources, overloads, and corrupted costs.
 
-## M4 — Boucle agent
+Validation: injected corruptions covered by [test_verify.py](../tests/test_verify.py). **Status: completed for feasibility and cost.**
 
-Objectif : relier Ollama, validation et résolution dans une boucle bornée.
+<a id="m4--boucle-agent"></a>
+## M4 - Agent Loop
 
-- [x] Livrer le CLI de génération et les diagnostics structurés.
-- [x] Implémenter et comparer JSON par prompt, génération par schéma et correction bornée.
-- [x] Limiter la génération à un appel, ou deux avec correction, et appliquer les budgets.
-- [x] Préserver les données déjà parsées lors d'une correction.
-- [x] Enregistrer réponses brutes, erreurs, observations et contrôles de ressources.
-- [x] Tester les branches avec des réponses contrôlées et exécuter un pilote Ollama réel en CLI.
+Objective: connect Ollama, validation, and resolution within a bounded loop.
 
-Validation : enchaînements couverts par [test_agent.py](../tests/test_agent.py). **Statut : terminé pour la boucle CLI sans admission HITL.**
+- [x] Deliver the generation CLI and structured diagnostics.
+- [x] Implement and compare JSON by prompt, schema-based generation, and bounded correction.
+- [x] Limit generation to one call, or two with correction, and apply budgets.
+- [x] Preserve already parsed data during correction.
+- [x] Log raw responses, errors, observations, and resource controls.
+- [x] Test branches with controlled responses and execute a real Ollama pilot via CLI.
 
-## M5 — Évaluation
+Validation: chained workflows covered by [test_agent.py](../tests/test_agent.py). **Status: completed for the CLI loop without HITL.**
 
-Objectif : évaluer les formulations et les réponses finales à partir de références indépendantes.
+<a id="m5--évaluation"></a>
+## M5 - Evaluation
 
-- [x] Préparer le corpus initial de 16 cas : 7 de développement et 9 de test.
-- [x] Préparer le corpus étendu de 130 cas : 30 de développement et 100 de test.
-- [x] Auditer références, empreintes et séparation des familles entre développement et test.
-- [x] Implémenter les campagnes journalisées et les métriques, en comptant les résultats absents dans les dénominateurs.
-- [x] Réaliser les évaluations historiques initiale, étendue et indépendante.
-- [x] Analyser les omissions, associations erronées, transpositions et corrections.
+Objective: evaluate formulations and final responses based on independent references.
 
-Validation : corpus couverts par [test_benchmark_data.py](../tests/test_benchmark_data.py) et [test_extended_corpus.py](../tests/test_extended_corpus.py), protocoles et métriques par les tests d'évaluation. **Statut : évaluation exploratoire réalisée.** Les résultats utiles aux décisions sont résumés dans la [mémoire](memory.md#m5--évaluation).
+- [x] Prepare the initial corpus of 16 cases: 7 development and 9 test cases.
+- [x] Prepare the extended corpus of 130 cases: 30 development and 100 test cases.
+- [x] Audit references, fingerprints, and family separations between development and test cases.
+- [x] Implement logged campaigns and metrics, counting missing results in denominators.
+- [x] Conduct initial, extended, and independent historical evaluations.
+- [x] Analyze omissions, erroneous associations, transpositions, and corrections.
 
-## Extensions — Routage déterministe et HITL
+Validation: corpora covered by [test_benchmark_data.py](../tests/test_benchmark_data.py) and [test_extended_corpus.py](../tests/test_extended_corpus.py), protocols and metrics by evaluation tests. **Status: exploratory evaluation completed.** Useful decision-making results are summarized in the [technical development log](memory.md#m5--évaluation).
 
-Objectif : résoudre directement les formats certifiés et soumettre les autres formulations à une revue explicite.
+<a id="extensions--routage-déterministe-et-hitl"></a>
+## Extensions - Deterministic Routing and HITL
 
-- [x] Extraire les faits avec associations, unités, citations et positions dans la source.
-- [x] Certifier couverture, contraintes standard, absence de contradictions et reconstruction canonique.
-- [x] Construire et résoudre les entrées `VERIFIED_COMPLETE` sans LLM.
-- [x] Produire sinon un brouillon manuel ou une proposition Ollama facultative, avec inconnues et diagnostics.
-- [x] Ajouter correction, validation, revue, confirmation de portée, approbation et rejet.
-- [x] Lier les autorisations à la source et à la proposition exactes, puis les invalider après modification.
-- [x] Maintenir les bloqueurs de la source originale après réécriture du brouillon.
-- [x] Vérifier les gardes avec des approbations simulées.
+Objective: directly resolve certified formats and submit other formulations to explicit review.
 
-Validation : révisions, autorisations et routage couverts par [test_hitl.py](../tests/test_hitl.py) et [test_routing.py](../tests/test_routing.py). **Statut : terminé sur le périmètre technique V1.**
+- [x] Extract facts with associations, units, citations, and positions in the source.
+- [x] Certify coverage, standard constraints, absence of contradictions, and canonical reconstruction.
+- [x] Build and resolve inputs `VERIFIED_COMPLETE` without LLM.
+- [x] Produce alternatively a manual draft or an optional Ollama proposal, with unknowns and diagnostics.
+- [x] Add correction, validation, review, scope confirmation, approval, and rejection steps.
+- [x] Link authorizations to exact source and proposal inputs, then invalidate them after modification.
+- [x] Maintain original source blockers after rephrasing the draft.
+- [x] Verify guards with simulated approvals.
 
-## Extension — Interface web
+Validation: reviews, authorizations, and routing covered by [test_hitl.py](../tests/test_hitl.py) and [test_routing.py](../tests/test_routing.py). **Status: completed within the V1 technical scope.**
 
-Objectif : réunir saisie, revue, résolution et restitution dans une interface locale.
+<a id="extension--interface-web"></a>
+## Extension - Web Interface
 
-- [x] Livrer le serveur local mono-utilisateur et l'interface sans build frontend.
-- [x] Afficher les étapes et diagnostics par événements SSE.
-- [x] Intégrer brouillon manuel, Ollama, édition, validation, revue et approbation.
-- [x] Persister les sessions et les consulter après redémarrage sans relancer les traitements.
-- [x] Ajouter visualisations, exports SVG/HTML/JSON et invalidation après édition.
-- [x] Autoriser explicitement les imports de sessions en lecture seule.
-- [x] Tester contrôles HTTP, suppression et protections des fichiers de sessions.
-- [x] Exécuter sous Chrome le format certifié du README, avec optimum 6 et candidat vérifié.
-- [x] Exécuter le HITL manuel, le refus sans approbation, l'invalidation et la nouvelle approbation.
-- [x] Vérifier persistance, diagnostics, visualisations et cohérence des exports.
-- [x] Contrôler les largeurs 1440, 1280 et 390 px, avec actions mobiles et sans débordement global ni erreur JavaScript bloquante.
-- [x] Vérifier le parcours sans Ollama et une réponse de génération contrôlée.
+Objective: consolidate input, review, resolution, and delivery within a local interface.
 
-Validation : services couverts par [test_web.py](../tests/test_web.py), parcours Chrome par [web_browser.mjs](../tests/web_browser.mjs), avec génération et approbations contrôlées. **Statut : terminé sur le périmètre fonctionnel et technique web V1.**
+- [x] Deliver a single-user local server and an interface requiring no frontend build.
+- [x] Display steps and diagnostics via SSE events.
+- [x] Integrate manual draft, Ollama, edition, validation, review, and approval.
+- [x] Persist sessions and consult them after restart without re-triggering processing.
+- [x] Add visualizations, SVG/HTML/JSON exports, and invalidation after edition.
+- [x] Explicitly allow import of sessions in read-only mode.
+- [x] Test HTTP controls, file deletion, and session file protections.
+- [x] Execute under Chrome the certified README format, with optimal 6 and verified candidate.
+- [x] Execute the HITL manual process, rejection without approval, invalidation, and new approval.
+- [x] Verify persistence, diagnostics, visualizations, and consistency of exports.
+- [x] Control widths 1440, 1280, and 390 px, with mobile actions and no global overflow or blocking JavaScript error.
+- [x] Verify the path without Ollama and a controlled generation response.
 
-## Clôture V1
+Validation: services covered by [test_web.py](../tests/test_web.py), Chrome path by [web_browser.mjs](../tests/web_browser.mjs), with controlled generation and approvals. **Status: completed within the functional and technical web scope V1.**
 
-Objectif : vérifier les parcours intégrés et consolider les observations réalisées.
+<a id="clôture-v1"></a>
+## V1 Closure
 
-- [x] Exécuter un pilote Ollama réel depuis le web avec des références indépendantes.
-- [x] Réaliser des revues humaines et comparer les formulations initiales et approuvées.
-- [x] Contrôler résolution, vérification et exports après correction par l'investigateur et approbation humaine.
-- [x] Distinguer dans le bilan formulations, décisions de revue et résultats du solveur.
+Objective: verify integrated paths and consolidate observed findings.
 
-Validation : observations synthétisées dans la [mémoire technique](memory.md#bilan-des-fonctionnalités-et-validations-v1). **Statut : parcours observés et bilan réalisés.**
+- [x] Execute a real Ollama pilot from the web with independent references.
+- [x] Conduct human reviews and compare initial and approved formulations.
+- [x] Control resolution, verification, and exports after investigator correction and human approval.
+- [x] Distinguish in the report formulations, review decisions, and solver results.
 
-**V1 — Terminée sur son périmètre fonctionnel et technique.**
+Validation: observations synthesized in the [technical development log](memory.md#bilan-des-fonctionnalités-et-validations-v1). **Status: paths observed and report completed.**
+
+**V1 - Completed within its functional and technical scope.**

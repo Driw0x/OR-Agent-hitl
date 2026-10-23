@@ -1,116 +1,127 @@
+[English](README.md) | [Français](README.fr.md) | [简体中文](README.zh-CN.md)
+
+<a id="or-agent"></a>
 # OR-Agent
 
-[Français](README.md) | [简体中文](README.zh-CN.md)
 
 
-Application locale pour structurer, résoudre et vérifier des problèmes d'affectation sous capacités.
+Local application for structuring, solving, and verifying assignment problems under capacity constraints.
 
-## Présentation
+<a id="présentation"></a>
+## Presentation
 
-OR-Agent transforme les données d'un **problème d'affectation généralisée (GAP, Generalized Assignment Problem)** en une formulation structurée, valide cette formulation, puis la résout avec CP-SAT. Un vérificateur indépendant recalcule les affectations, les charges et le coût.
+OR-Agent transforms data from a **Generalized Assignment Problem (GAP)** into a structured formulation, validates this formulation, and then solves it using CP-SAT. An independent verifier recomputes the assignments, loads, and costs.
 
-L'interface web et le CLI proposent une extraction déterministe, une génération locale facultative avec Ollama et un parcours de revue et d'approbation humaine (HITL). Les sessions, visualisations et exports permettent de consulter et de conserver les résultats.
+The web interface and CLI offer deterministic extraction, optional local generation using Ollama, and a human-in-the-loop (HITL) review and approval process. Sessions, visualizations, and exports allow for consultation and preservation of results.
 
-**V1 terminée sur son périmètre fonctionnel et technique.**
+**Version 1 completed within its functional and technical scope.**
 
-## Problème GAP pris en charge
+<a id="problème-gap-pris-en-charge"></a>
+## GAP problem handled
 
-Le GAP retenu repose sur les règles suivantes :
+The GAP addressed is based on the following rules:
 
-- Toutes les tâches sont obligatoires et indivisibles.
-- Chaque tâche est affectée exactement une fois à une ressource.
-- La consommation d'une tâche peut dépendre de la ressource choisie.
-- Pour chaque ressource, la somme des consommations ne dépasse pas sa capacité.
-- L'objectif est de minimiser la somme des coûts d'affectation.
+- All tasks are mandatory and indivisible.
+- Each task is assigned exactly once to a resource.
+- The consumption of a task may depend on the chosen resource.
+- For each resource, the sum of consumptions does not exceed its capacity.
+- The objective is to minimize the sum of assignment costs.
 
-Les coûts sont des entiers entre `-10^9` et `10^9`. Les consommations et capacités sont des entiers entre `0` et `10^9`. Les coûts négatifs et les consommations nulles sont autorisés. Les unités doivent être explicites ; aucune conversion implicite n'est effectuée. Le modèle accepte au plus **10 000 couples tâche–ressource**.
+Costs are integers between `-10^9` and `10^9`. Consumptions and capacities are integers between `0` and `10^9`. Negative costs and zero consumptions are allowed. Units must be explicitly specified; no implicit conversions are performed. The model accepts at most **10,000 task-resource pairs**.
 
-Routage, précédences, échéances, ordonnancement temporel, tâches facultatives et contraintes supplémentaires entre tâches sortent de ce contrat. Une demande incomplète appelle une clarification ; une contrainte hors périmètre ne doit pas être supprimée pour rendre le problème soluble.
+Routing, precedence constraints, deadlines, temporal scheduling, optional tasks, and additional task constraints fall outside the scope of this contract. An incomplete request triggers clarification; a constraint outside the scope must not be removed to make the problem solvable.
 
-## Fonctionnement
+<a id="fonctionnement"></a>
+## Operation
 
 ```text
-Énoncé original
+Original statement
     |
     v
-Extraction déterministe des faits et contrôle du périmètre
-    |                                              |
-    v                                              v
-Format fermé certifié                    Entrée non certifiée
-Construction directe du GAP              Brouillon manuel ou Ollama
-Sans LLM ni revue humaine                Correction et validation
-    |                                    Revue et confirmation de portée
-    |                                    Approbation de la révision exacte
-    |                                              |
-    +----------------------+-----------------------+
+Deterministic fact extraction and scope checks
+    |                                          |
+    v                                          v
+Certified closed format                 Uncertified input
+Direct GAP construction                 Manual or Ollama draft
+No LLM or human review                  Correction and validation
+    |                                   Review and scope confirmation
+    |                                   Approval of the exact revision
+    |                                          |
+    +----------------------+-------------------+
                            |
                            v
-                    Conversion CP-SAT
+                    CP-SAT conversion
                            |
                            v
-                    Résolution sous budget
+                    Solving within budget
                            |
                            v
-                    Vérification arithmétique indépendante
+                    Independent arithmetic verification
                            |
                            v
-                    Résultat, visualisations et exports
+                    Result, visualizations and exports
 ```
 
-La certification déterministe concerne uniquement les formats fermés reconnus, avec contrôle des données et de leur provenance. Pour les autres entrées, une proposition manuelle ou Ollama doit être contrôlée, revue et approuvée. L'approbation autorise la révision relue ; elle ne garantit pas automatiquement sa fidélité à l'énoncé. Toute modification invalide les autorisations associées.
+Deterministic certification applies only to recognized closed formats, with data and provenance controls. For all other inputs, manual or Ollama-generated proposals must be controlled, reviewed, and approved. Approval authorizes the reviewed revision; it does not automatically guarantee fidelity to the original statement. Any modification invalidates associated permissions.
 
-Un modèle validé respecte le contrat de données. Un candidat vérifié est faisable pour le GAP fourni. L'optimum exige en plus une preuve CP-SAT :
+A validated model respects the data contract. A verified candidate is feasible for the provided GAP. Optimality requires, in addition, a CP-SAT proof:
 
-- `OPTIMAL` : optimum établi lorsque la preuve et la vérification du candidat sont valides.
-- `FEASIBLE` : candidat disponible, soumis au vérificateur ; optimalité non prouvée.
-- `INFEASIBLE` : GAP fourni prouvé infaisable.
-- `UNKNOWN` : recherche inconclusive dans le budget.
+- `OPTIMAL`: optimum established when the proof and candidate verification are valid.
+- `FEASIBLE`: candidate available, submitted to the verifier; optimality not proven.
+- `INFEASIBLE`: provided GAP proven infeasible.
+- `UNKNOWN`: search inconclusive within the budget.
 
-Une erreur technique est signalée séparément.
+A technical error is reported separately.
 
-## Fonctionnalités
+<a id="fonctionnalités"></a>
+## Features
 
-### Extraction et formulation
+<a id="extraction-et-formulation"></a>
+### Extraction and Formulation
 
-- Modèles Pydantic stricts : types, dimensions, identifiants uniques, unités et refus des champs inconnus.
-- Provenance des données et diagnostics sur les éléments manquants, contradictoires ou non interprétés.
-- Reconstruction déterministe pour les formats fermés reconnus.
-- Édition d'une proposition lisible, avec contrôle des associations tâche–ressource et des matrices reconstruites.
-- Revue humaine, confirmation de la portée GAP et approbation liée aux empreintes de la révision.
+- Strict Pydantic models: types, dimensions, unique identifiers, units, and rejection of unknown fields.
+- Data provenance and diagnostics on missing, contradictory, or uninterpretable elements.
+- Deterministic reconstruction for recognized closed formats.
+- Editing a readable proposal, with validation of task-resource associations and reconstructed matrices.
+- Human review, confirmation of the GAP scope, and approval linked to revision fingerprints.
 
-### Résolution et vérification
+<a id="résolution-et-vérification"></a>
+### Resolution and verification
 
-- Variables binaires d'affectation, capacités cumulatives et objectif de coût construits par le code.
-- Résolution CP-SAT avec limite de temps, candidat et borne disponibles selon le statut.
-- Vérification indépendante de la couverture des tâches, des charges et du coût total.
-- Restitution distinguant solution faisable, optimum prouvé, infaisabilité et absence de conclusion.
+- Binary assignment variables, cumulative capacities, and cost objective constructed by the code.
+- CP-SAT resolution with time limit, candidate and bound available according to status.
+- Independent verification of task coverage, load, and total cost.
+- Presentation distinguishing feasible solution, proven optimum, infeasibility, and absence of conclusion.
 
-### Interface et traçabilité
+<a id="interface-et-traçabilité"></a>
+### Interface and traceability
 
-- Interface web locale, sans build frontend, avec suivi des étapes par événements serveur (SSE).
-- Sessions persistées, consultation après redémarrage et diagnostics de génération.
-- Visualisation des affectations et des capacités utilisées ; exports SVG, HTML et JSON.
-- Import en lecture seule de sessions existantes explicitement autorisées au démarrage.
+- Local web interface, without frontend build, with step tracking via server events (SSE).
+- Persistent sessions, consultation after restart, and generation diagnostics.
+- Visualization of assignments and utilized capacities; exports in SVG, HTML, and JSON formats.
+- Read-only import of existing sessions explicitly authorized at startup.
 
-Les outils d'évaluation auditent les corpus et comparent les méthodes de génération et de correction.
+Evaluation tools audit corpora and compare generation and correction methods.
 
-## Architecture et technologies
+<a id="architecture-et-technologies"></a>
+## Architecture and technologies
 
 ```text
-or_agent/                      Cœur du projet : extraction, validation, revue humaine, résolution et interface web
-data/                          Jeux de données et références d'évaluation
-examples/                      Exemples de problèmes GAP
-tests/                         Tests automatisés
-docs/                          Roadmap et mémoire technique
+or_agent/                      Project core: extraction, validation, human review, solving and web interface
+data/                          Datasets and evaluation references
+examples/                      GAP problem examples
+tests/                         Automated tests
+docs/                          Roadmap and technical development log
 ```
 
-Le socle utilise **Python**, **Pydantic**, **OR-Tools CP-SAT** et **pytest**. Ollama fournit la génération locale facultative avec `qwen2.5-coder:7b`. Le serveur HTTP et les appels Ollama utilisent la bibliothèque standard Python ; le frontend utilise HTML, CSS et JavaScript.
+The core uses **Python**, **Pydantic**, **OR-Tools CP-SAT**, and **pytest**. Ollama provides optional local generation with `qwen2.5-coder:7b`. The HTTP server and Ollama calls use the standard Python library; the frontend uses HTML, CSS, and JavaScript.
 
+<a id="installation"></a>
 ## Installation
 
-Prérequis : **Python 3.12 minimum ; installations vérifiées sur Python 3.12 et 3.13**, Git ; Ollama facultatif. Les versions de l'environnement reproductible sont figées dans [requirements.txt](requirements.txt). Les dépendances du paquet et la même version Python minimale sont déclarées dans [pyproject.toml](pyproject.toml).
+Prerequisites: **Python 3.12 minimum; verified installations on Python 3.12 and 3.13**, Git; Ollama optional. The reproducible environment versions are fixed in [requirements.txt](requirements.txt). Package dependencies and the same minimal Python version are declared in [pyproject.toml](pyproject.toml).
 
-Sous Windows PowerShell, cloner le dépôt. Pour une copie existante, commencer à la création de l'environnement depuis sa racine.
+Under Windows PowerShell, clone the repository. For an existing copy, start environment creation from its root.
 
 ```powershell
 git clone https://github.com/Driw0x/OR-Agent-hitl.git
@@ -122,7 +133,7 @@ $py = ".\.venv\Scripts\python.exe"
 & $py -m pip check
 ```
 
-Sous Linux :
+Under Linux:
 
 ```sh
 git clone https://github.com/Driw0x/OR-Agent-hitl.git
@@ -134,13 +145,14 @@ python3 -m venv .venv
 .venv/bin/python -m pip check
 ```
 
-`python3` doit correspondre à Python 3.12 minimum. S'il pointe vers une version plus ancienne, utiliser explicitement un interpréteur compatible installé, par exemple `python3.12 -m venv .venv`. Les dépendances figées exigent également Python 3.12 minimum.
+`python3` must correspond to Python 3.12 minimum. If it points to an older version, explicitly use an installed compatible interpreter, for example `python3.12 -m venv .venv`. The fixed dependencies also require Python 3.12 minimum.
 
-L'installation en mode éditable fournit aussi la commande `or-agent`. Les exemples ci-dessous utilisent `python -m or_agent` pour identifier explicitement l'environnement Python.
+Editable installation mode also provides the command `or-agent`. The examples below use `python -m or_agent` to explicitly identify the Python environment.
 
-## Utilisation de l'interface web
+<a id="utilisation-de-linterface-web"></a>
+## Using the web interface
 
-Démarrer l'interface depuis la racine, sous PowerShell :
+Start the interface from the root, under PowerShell:
 
 ```powershell
 $py = ".\.venv\Scripts\python.exe"
@@ -148,24 +160,25 @@ $env:PYTHONIOENCODING = "utf-8"
 & $py -B -m or_agent web
 ```
 
-Sous Linux : `.venv/bin/python -B -m or_agent web`.
+Under Linux: `.venv/bin/python -B -m or_agent web`.
 
-Ouvrir [http://127.0.0.1:8765](http://127.0.0.1:8765), avec cette adresse exacte plutôt que `localhost`. Le serveur est local et mono-utilisateur. Les sessions persistent dans `.or-agent-web/`. **Ctrl+C** attend la fin des traitements actifs avant l'arrêt, sans arrêter un serveur Ollama partagé.
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765), with this exact address rather than `localhost`. The server is local and single-user. Sessions persist in `.or-agent-web/`. **Ctrl+C** waits for active processing to complete before shutdown, without terminating a shared Ollama server.
 
-1. Saisir un problème GAP ou choisir un exemple intégré, puis cliquer **Lancer l'analyse**.
-2. Consulter les faits extraits et les diagnostics. Une entrée entièrement certifiée est résolue directement sans LLM ni revue humaine.
-3. Sinon, saisir une proposition ou cliquer **Demander une proposition Ollama**. Comparer à la source, corriger, **Enregistrer les modifications**, puis **Vérifier la proposition**.
-4. **Effectuer la revue**, puis **Confirmer la portée**. Cocher l'approbation et cliquer **Résoudre le GAP approuvé** pour approuver et résoudre cette révision exacte.
-5. Consulter le statut, le coût, les charges et la vérification indépendante.
-6. Examiner les visualisations et exporter les résultats. Une modification invalide les approbations et les exports courants.
+1. Enter a GAP problem or select a built-in example, then click **Lancer l'analyse** (Run analysis).
+2. Review extracted facts and diagnostics. A fully certified input is resolved directly without LLM or human review.
+3. Otherwise, enter a proposal or click **Demander une proposition Ollama** (Request an Ollama proposal). Compare it with the source, make corrections, click **Enregistrer les modifications** (Save changes), then **Vérifier la proposition** (Verify proposal).
+4. Click **Effectuer la revue** (Perform review), then **Confirmer la portée** (Confirm scope). Check the approval box and click **Résoudre le GAP approuvé** (Solve approved GAP) to approve and solve this exact revision.
+5. Check the status, cost, resource loads, and independent verification.
+6. Examine the visualizations and export the results. Any modification invalidates approvals and current exports.
 
-Les données manquantes, contradictions et contraintes hors périmètre détectées bloquent l'approbation. Une contradiction de la source exige un énoncé corrigé dans une nouvelle session : effacer son diagnostic du brouillon ne la résout pas. Le parcours manuel et les exemples certifiés fonctionnent sans Ollama.
+Missing data, contradictions, and out-of-scope constraints block approval. A source contradiction requires a corrected statement in a new session: clearing the diagnosis from the draft does not resolve it. The manual workflow and certified examples work without Ollama.
 
-Les options `--port`, `--sessions`, `--base-url` et `--import-session` permettent d'adapter le lancement. Consulter `& $py -m or_agent web --help` ; sous Linux, remplacer `& $py` par `.venv/bin/python`.
+The options `--port`, `--sessions`, `--base-url`, and `--import-session` allow adapting the launch. Consult `& $py -m or_agent web --help`; under Linux, replace `& $py` with `.venv/bin/python`.
 
-### Exemple sans LLM
+<a id="exemple-sans-llm"></a>
+### Example without LLM
 
-Cet énoncé suit le format fermé à lignes étiquetées. Il peut être collé dans l'interface :
+This statement follows the closed-line-labeled format. It can be pasted into the interface:
 
 ```text
 Assign each task exactly once; minimize total cost within capacities.
@@ -181,13 +194,15 @@ R2 costs: T1=5, T2=1, T3=4.
 R2 consumption: T1=2, T2=2, T3=2.
 ```
 
-L'affectation optimale est `T1 → R1`, `T2 → R2`, `T3 → R1`. Le coût est **6 credits**, avec une charge de **4 slots sur R1** et **2 slots sur R2**. La même instance est fournie en JSON dans [examples/small.json](examples/small.json).
+The optimal assignment is `T1 → R1`, `T2 → R2`, `T3 → R1`. The cost is **6 credits**, with a load of **4 slots on R1** and **2 slots on R2**. The same instance is provided in JSON in [examples/small.json](examples/small.json).
 
-Les mots-clés, la ponctuation et les associations explicites appartiennent au format reconnu. Une traduction libre ou une reformulation peut basculer vers la revue humaine. [examples/small.txt](examples/small.txt) est une version en prose destinée au parcours de génération ; ce n'est pas le format certifié ci-dessus.
+Keywords, punctuation, and explicit associations belong to the recognized format. A free translation or rephrasing may trigger human review. [examples/small.txt](examples/small.txt) is a prose version intended for the generation workflow; it is not the certified format above.
 
-## Utilisation du CLI
+<a id="utilisation-du-cli"></a>
+## CLI Usage
 
-### Valider, résoudre et vérifier un GAP JSON
+<a id="valider-résoudre-et-vérifier-un-gap-json"></a>
+### Validate, resolve, and verify a GAP JSON
 
 ```powershell
 $py = ".\.venv\Scripts\python.exe"
@@ -196,42 +211,46 @@ $py = ".\.venv\Scripts\python.exe"
 & $py -B -m or_agent verify examples/small.json examples/candidate.json
 ```
 
-Les matrices JSON utilisent **les ressources en lignes et les tâches en colonnes**. `validate` contrôle le contrat structurel. `solve` résout ce modèle et vérifie son candidat. `verify` recalcule la faisabilité et le coût d'un candidat fourni, sans rechercher d'optimum. Ces commandes travaillent directement sur le GAP JSON.
+JSON matrices use **resources in rows and tasks in columns**. `validate` controls the structural contract. `solve` resolves this model and verifies its candidate. `verify` recalculates feasibility and cost of a provided candidate, without seeking an optimum. These commands work directly on the GAP JSON.
 
-[examples/infeasible.json](examples/infeasible.json) illustre une instance infaisable ; [examples/multiple.json](examples/multiple.json) contient une instance à optima multiples. `schema` expose le schéma de sortie attendu pour l'extraction.
+[examples/infeasible.json](examples/infeasible.json) illustrates an infeasible instance; [examples/multiple.json](examples/multiple.json) contains an instance with multiple optima. `schema` exposes the expected output schema for extraction.
 
-### Analyser un énoncé avant admission
+<a id="analyser-un-énoncé-avant-admission"></a>
+### Analyze a statement before admission
 
 ```powershell
 & $py -B -m or_agent route analyze examples/small.txt
 ```
 
-Cette commande affiche les faits déterministes et le certificat, sans appeler Ollama ni résoudre. `route submit` crée ensuite une session avec branche certifiée ou HITL. Les sous-commandes `review`, `validate`, `scope`, `approve`, `reject`, `status` et `solve` exposent les étapes de revue. Consulter `& $py -m or_agent route --help` et la [mémoire technique](docs/memory.md) pour les contrats de révision.
+This command displays deterministic facts and the certificate, without calling Ollama or resolving. `route submit` then creates a session with certified branch or HITL. The sub-commands `review`, `validate`, `scope`, `approve`, `reject`, `status`, and `solve` expose the review steps. Consult `& $py -m or_agent route --help` and the [technical development log](docs/memory.md) for review contracts.
 
-### Génération et correction bornée
+<a id="génération-et-correction-bornée"></a>
+### Bounded generation and correction
 
 ```powershell
 & $py -B -m or_agent agent examples/small.txt --total-seconds 180 --solver-seconds 5
 ```
 
-La génération structurée permet au plus une correction après diagnostic, soit deux appels maximum. `--max-calls 1` limite le traitement à un appel. La commande `agent` résout directement une extraction validée, sans approbation humaine. Pour contrôler la proposition avant résolution, utiliser le web ou `route`.
+Structured generation allows at most one correction after diagnosis, i.e., a maximum of two calls. `--max-calls 1` limits processing to a single call. The command `agent` resolves a validated extraction directly, without human approval. To control the proposal before resolution, use the web interface or `route`.
 
-## Configuration Ollama facultative
+<a id="configuration-ollama-facultative"></a>
+## Optional Ollama configuration
 
-Ollama est facultatif. Après son installation séparée, préparer le modèle :
+Ollama is optional. After its separate installation, prepare the model:
 
 ```powershell
 ollama pull qwen2.5-coder:7b
 ollama list
 ```
 
-Le web utilise `http://127.0.0.1:11434` par défaut ; `--base-url` permet de choisir une autre adresse. Il contrôle le digest attendu du modèle dans [web.py](or_agent/web.py) : un nom identique avec un digest différent peut être refusé. Le CLI `agent` accepte aussi `--model` ; cela ne change pas le modèle autorisé par le web.
+The web uses `http://127.0.0.1:11434` by default; `--base-url` allows selecting another address. It verifies the expected model digest in [web.py](or_agent/web.py): a model with the same name but a different digest may be rejected. The CLI `agent` also accepts `--model`; this does not change the model authorized by the web.
 
-Les contrôles de ressources peuvent refuser la génération ou interrompre l'attente côté client. Un timeout client ne garantit pas l'annulation du calcul dans Ollama. Les commandes `resources` et `ollama` exposent les diagnostics disponibles ; la saisie manuelle reste utilisable si la génération est indisponible.
+Resource controls may reject generation or interrupt client-side waiting. A client timeout does not guarantee cancellation of computation in Ollama. The commands `resources` and `ollama` expose available diagnostics; manual input remains usable if generation is unavailable.
 
+<a id="tests"></a>
 ## Tests
 
-Depuis la racine, sans lancer de campagne Ollama :
+From the root, without launching an Ollama campaign:
 
 ```powershell
 $py = ".\.venv\Scripts\python.exe"
@@ -240,30 +259,32 @@ $py = ".\.venv\Scripts\python.exe"
 & $py -B -m or_agent.extended_corpus audit
 ```
 
-Sous Linux, remplacer `& $py` par `.venv/bin/python`.
+On Linux, replace `& $py` with `.venv/bin/python`.
 
-Les tests couvrent les schémas, la comparaison CP-SAT/énumération exhaustive, les candidats corrompus, les budgets, la provenance, les évaluations et les sessions HITL/web. Les tests de génération utilisent des réponses contrôlées.
+Tests cover schemas, CP-SAT vs exhaustive enumeration, corrupted candidates, budgets, provenance, evaluations, and HITL/web sessions. Generation tests use controlled responses.
 
-La suite complète exige **Node 22 minimum et Chrome/Chromium** pour piloter un véritable navigateur via son protocole de débogage, sans dépendance JavaScript supplémentaire. `OR_AGENT_CHROME` permet de fournir le chemin du navigateur s'il n'est pas détecté. L'absence d'outils produit un échec explicite. Les tests de protections de fichiers exigent les permissions de création de liens.
+The full suite requires **Node 22 minimum and Chrome/Chromium** to control a real browser via its debugging protocol, without additional JavaScript dependencies. `OR_AGENT_CHROME` allows providing the browser path if not detected. The absence of tools results in an explicit failure. File protection tests require link creation permissions.
 
-Pour exécuter uniquement les parcours navigateur, déterministe et HITL, avec contrôle des exports et des largeurs 1440, 1280 et 390 px :
+To run only browser paths, deterministic and HITL workflows, with control over exports and widths 1440, 1280, and 390 px:
 
 ```powershell
 & $py -B -m pytest -q -s tests/test_web.py::test_browser_session_deletion_and_combined_approval
 ```
 
-Le navigateur utilise le serveur HTTP local et le vrai solveur CP-SAT. L'indisponibilité d'Ollama et une réponse de génération sont contrôlées ; aucune génération LLM réelle n'est requise.
+The browser uses the local HTTP server and the real CP-SAT solver. Ollama unavailability and generation responses are controlled; no actual LLM generation is required.
 
-Les corpus et leurs références permettent des audits hors ligne sans Ollama. Le [bilan V1](docs/memory.md#bilan-des-fonctionnalités-et-validations-v1) résume les validations techniques réalisées.
+Corpora and their references enable offline audits without Ollama. The [V1 Summary](docs/memory.md#bilan-des-fonctionnalités-et-validations-v1) summarizes the technical validations performed.
 
+<a id="documentation"></a>
 ## Documentation
 
-- [Roadmap](docs/roadmap.md) : milestones, checkpoints réalisés et statuts V1.
-- [Mémoire technique](docs/memory.md) : réalisations M0–M5, HITL, routage déterministe, interface web et validations V1.
-- [Exemples](examples/small.json) : point de départ pour vérifier la résolution sans LLM.
+- [Roadmap](docs/roadmap.md): milestones, achieved checkpoints, and V1 status.
+- [Technical Development Log](docs/memory.md): achievements from M0–M5, HITL, deterministic routing, web interface, and V1 validations.
+- [Examples](examples/small.json): starting point to verify resolution without LLM.
 
-### Licence
+<a id="licence"></a>
+### License
 
-Ce projet est distribué sous licence MIT. Voir [LICENSE](LICENSE).
+This project is distributed under the MIT License. See [LICENSE](LICENSE).
 
 Copyright © 2026 Victor YE.

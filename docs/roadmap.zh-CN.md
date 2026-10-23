@@ -1,12 +1,12 @@
-[Français](roadmap.md) | [简体中文](roadmap.zh-CN.md)
+[English](roadmap.md) | [Français](roadmap.fr.md) | [简体中文](roadmap.zh-CN.md)
 
 <a id="or-agent--roadmap-et-checkpoints-de-validation"></a>
-# OR-Agent — 路径图和验证检查点
+# OR-Agent - 路径图和验证检查点
 
 该路径图追溯了里程碑和验证检查点。[README](../README.zh-CN.md) 介绍了产品及其使用方式；[技术文档](memory.zh-CN.md) 解释了实现选择。
 
 <a id="m0--cadrage-gap"></a>
-## M0 — 间隙定义
+## M0 - 间隙定义
 
 目标：确定能力分配合同。
 
@@ -19,7 +19,7 @@
 验证：合同在 [models.py](../or_agent/models.py) 中实现，并通过模式和求解测试覆盖。**状态：已完成。**
 
 <a id="m1--validation-et-représentation"></a>
-## M1 — 验证与表示
+## M1 - 验证与表示
 
 目标：以严格且可控的模型表示数据。
 
@@ -32,7 +32,7 @@
 验证：有效和拒绝案例由 [test_models.py](../tests/test_models.py) 覆盖。**状态：结构验证已完成。**
 
 <a id="m2--résolution-cp-sat"></a>
-## M2 — CP-SAT 求解
+## M2 - CP-SAT 求解
 
 目标：在时间限制内将提供的间隙转换并求解。
 
@@ -44,7 +44,7 @@
 验证：转换、状态和参考的完整性由 [test_solver.py](../tests/test_solver.py) 覆盖。**状态：针对提供的间隙已完成。**
 
 <a id="m3--vérification-indépendante"></a>
-## M3 — 独立验证
+## M3 - 独立验证
 
 目标：通过独立求解器计算来控制分配。
 
@@ -57,7 +57,7 @@
 验证：注入的损坏情况由 [test_verify.py](../tests/test_verify.py) 覆盖。**状态：可行性与成本验证已完成。**
 
 <a id="m4--boucle-agent"></a>
-## M4 — Agent 循环
+## M4 - Agent 循环
 
 目标：将 Ollama、验证与解决纳入一个有限循环中。
 
@@ -71,7 +71,7 @@
 验证：由 [test_agent.py](../tests/test_agent.py) 覆盖。**状态：已完成，无需人工介入的 CLI 循环。**
 
 <a id="m5--évaluation"></a>
-## M5 — 评估
+## M5 - 评估
 
 目标：基于独立参考材料评估表述和最终响应。
 
@@ -85,7 +85,7 @@
 验证：由 [test_benchmark_data.py](../tests/test_benchmark_data.py) 和 [test_extended_corpus.py](../tests/test_extended_corpus.py) 覆盖，评估协议和指标由评估测试定义。**状态：探索性评估已完成。** 用于决策的有用结果已汇总在 [记忆](memory.zh-CN.md#m5--évaluation) 中。
 
 <a id="extensions--routage-déterministe-et-hitl"></a>
-## 扩展 — 确定性路由与人工介入（HITL）
+## 扩展 - 确定性路由与人工介入（HITL）
 
 目标：直接处理认证格式，并将其他表述提交给明确的人工审查。
 
@@ -101,7 +101,7 @@
 验证：修订、权限与路由由 [test_hitl.py](../tests/test_hitl.py) 和 [test_routing.py](../tests/test_routing.py) 覆盖。**状态：在技术范围 V1 上已完成。**
 
 <a id="extension--interface-web"></a>
-## 扩展 — Web 界面
+## 扩展 - Web 界面
 
 目标：在本地界面中集成输入、审查、解决与结果呈现。
 
@@ -132,4 +132,4 @@
 
 验证：观察结果已汇总至[技术记忆](memory.zh-CN.md#bilan-des-fonctionnalités-et-validations-v1)。**状态：流程已观察，报告已生成。**
 
-**V1 — 在其功能与技术范围内已圆满完成。**
+**V1 - 在其功能与技术范围内已圆满完成。**

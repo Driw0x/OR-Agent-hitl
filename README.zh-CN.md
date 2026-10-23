@@ -1,4 +1,4 @@
-[Français](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [Français](README.fr.md) | [简体中文](README.zh-CN.md)
 
 <a id="or-agent"></a>
 # OR-Agent
@@ -33,31 +33,31 @@ OR-Agent 将**广义指派问题（GAP，Generalized Assignment Problem）**的�
 ## 运行机制
 
 ```text
-Énoncé original
+原始问题描述
     |
     v
-Extraction déterministe des faits et contrôle du périmètre
-    |                                              |
-    v                                              v
-Format fermé certifié                    Entrée non certifiée
-Construction directe du GAP              Brouillon manuel ou Ollama
-Sans LLM ni revue humaine                Correction et validation
-    |                                    Revue et confirmation de portée
-    |                                    Approbation de la révision exacte
-    |                                              |
-    +----------------------+-----------------------+
-                           |
-                           v
-                    Conversion CP-SAT
-                           |
-                           v
-                    Résolution sous budget
-                           |
-                           v
-                    Vérification arithmétique indépendante
-                           |
-                           v
-                    Résultat, visualisations et exports
+确定性事实提取与范围检查
+    |                                  |
+    v                                  v
+已认证的封闭格式                   未认证的输入
+直接构建 GAP                      人工或 Ollama 草稿
+无需 LLM 或人工审查               修正与验证
+    |                             审查与范围确认
+    |                             批准准确的修订版本
+    |                                  |
+    +------------------+---------------+
+                       |
+                       v
+                    CP-SAT 转换
+                       |
+                       v
+                    在预算内求解
+                       |
+                       v
+                    独立算术验证
+                       |
+                       v
+                    结果、可视化与导出
 ```
 
 确定性认证仅适用于已识别的封闭格式，并检查数据及其来源。对于其他输入，人工填写或 Ollama 生成的提案必须经过检查、审查和批准。批准仅授权已经审阅的具体修订版本，并不自动保证其忠实于原始问题陈述。任何修改都会使相关授权失效。
@@ -105,11 +105,11 @@ Sans LLM ni revue humaine                Correction et validation
 ## 架构与技术
 
 ```text
-or_agent/                      Cœur du projet : extraction, validation, revue humaine, résolution et interface web
-data/                          Jeux de données et références d'évaluation
-examples/                      Exemples de problèmes GAP
-tests/                         Tests automatisés
-docs/                          Roadmap et mémoire technique
+or_agent/                      项目核心：提取、验证、人工审查、求解与网页界面
+data/                          数据集与评估参考
+examples/                      GAP 问题示例
+tests/                         自动化测试
+docs/                          路线图与技术开发记录
 ```
 
 基础层使用 **Python**、**Pydantic**、**OR-Tools CP-SAT** 和 **pytest**。Ollama提供可选的本地生成功能，标识为`qwen2.5-coder:7b`。HTTP服务器及Ollama调用使用标准Python库；前端使用HTML、CSS和JavaScript。

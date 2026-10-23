@@ -1,112 +1,125 @@
-# OR-Agent — Mémoire technique du projet
+[English](memory.md) | [Français](memory.fr.md) | [简体中文](memory.zh-CN.md)
 
-[Français](memory.md) | [简体中文](memory.zh-CN.md)
+<a id="or-agent--mémoire-technique-du-projet"></a>
+# OR-Agent - Technical development log
 
 
-Cette mémoire retrace les réalisations et les décisions techniques d'OR-Agent. Le [README](../README.md) présente le produit et les commandes ; la [roadmap](roadmap.md) conserve les checkpoints réalisés.
 
-## M0 — Cadrage GAP
+This technical development log traces the achievements and technical decisions of OR-Agent. The [README](../README.md) presents the product and commands; the [roadmap](roadmap.md) preserves the achieved checkpoints.
 
-Le projet retient l'affectation obligatoire et indivisible de chaque tâche à une ressource. Pour une ressource `i` et une tâche `j`, `x[i,j]` est une variable binaire, `c[i,j]` le coût, `a[i,j]` la consommation et `b[i]` la capacité :
+<a id="m0--cadrage-gap"></a>
+## M0 - GAP scope
+
+The project retains the mandatory and indivisible assignment of each task to a resource. For a resource `i` and a task `j`, `x[i,j]` is a binary variable, `c[i,j]` the cost, `a[i,j]` the consumption, and `b[i]` the capacity:
 
 ```text
-Minimiser : somme(i,j) c[i,j] * x[i,j]
-Sous contraintes :
-    pour chaque tâche j : somme(i) x[i,j] = 1
-    pour chaque ressource i : somme(j) a[i,j] * x[i,j] <= b[i]
-    x[i,j] appartient à {0, 1}
+Minimize: sum(i,j) c[i,j] * x[i,j]
+Subject to:
+    for each task j: sum(i) x[i,j] = 1
+    for each resource i: sum(j) a[i,j] * x[i,j] <= b[i]
+    x[i,j] belongs to {0, 1}
 ```
 
-Ce contrat entier permet de construire et de contrôler le modèle sans interprétation supplémentaire dans le solveur. Le [périmètre GAP](../README.md#problème-gap-pris-en-charge) fixe les bornes, les unités et les contraintes admissibles. La validation du modèle, sa fidélité à la source, la faisabilité et l'optimalité constituent des contrôles distincts.
+This complete contract enables the construction and control of the model without additional interpretation within the solver. The [GAP scope](../README.md#problème-gap-pris-en-charge) defines the bounds, units, and admissible constraints. Model validation, fidelity to the source, feasibility, and optimality are distinct controls.
 
-## M1 — Validation et représentation
+<a id="m1--validation-et-représentation"></a>
+## M1 - Validation and representation
 
-[models.py](../or_agent/models.py) fournit les contrats communs du CLI, de l'agent et du solveur : `Gap` pour les données, `Extraction` pour les dispositions `ready`, `clarify`, `unsupported` et `invalid`, et `Candidate` pour les affectations et le coût annoncé.
+[models.py](../or_agent/models.py) provides the common contracts for the CLI, the agent, and the solver: `Gap` for data, `Extraction` for the arrangements `ready`, `clarify`, `unsupported` and `invalid`, and `Candidate` for assignments and the announced cost.
 
-Pydantic impose des modèles stricts et fermés. Les ressources occupent les lignes des matrices et les tâches les colonnes. Les contrôles portent sur les identifiants uniques, les dimensions, les domaines numériques et les unités ; le lecteur JSON refuse aussi les clés dupliquées et les nombres non finis.
+Pydantic enforces strict and closed models. Resources occupy the rows of matrices and tasks the columns. Controls pertain to unique identifiers, dimensions, numeric domains, and units; the JSON reader also rejects duplicated keys and non-finite numbers.
 
-Une extraction `ready` exige un problème complet, aucun diagnostic bloquant et une citation exacte de la source pour chacun des sept champs du GAP. Les autres dispositions exigent une explication et ne contiennent pas de problème à résoudre. Les cas valides et les refus sont couverts par [test_models.py](../tests/test_models.py).
+An extraction `ready` requires a complete problem, no blocking diagnosis, and an exact citation from the source for each of the seven GAP fields. Other arrangements require an explanation and do not contain a problem to solve. Valid cases and rejections are covered by [test_models.py](../tests/test_models.py).
 
-## M2 — Résolution CP-SAT
+<a id="m2--résolution-cp-sat"></a>
+## M2 - CP-SAT Resolution
 
-[solver.py](../or_agent/solver.py) construit les variables binaires, l'affectation unique, les capacités et l'objectif. Le LLM fournit des données, jamais du code exécutable au solveur.
+[solver.py](../or_agent/solver.py) constructs binary variables, unique assignments, capacities, and the objective. The LLM provides data, never executable code to the solver.
 
-CP-SAT utilise un worker, une graine fixe et des tolérances d'optimalité nulles. Le budget par défaut est de cinq secondes. Le résultat conserve candidat, objectif, meilleure borne, version, paramètres et temps du solveur. Le coût du candidat est recalculé en arithmétique entière ; la preuve d'optimalité exige `OPTIMAL` et l'égalité de l'objectif et de la borne.
+CP-SAT uses a worker, a fixed seed, and zero tolerance for optimality. The default budget is five seconds. The result preserves candidate, objective, best bound, version, parameters, and solver time. The candidate cost is recalculated in integer arithmetic; proof of optimality requires `OPTIMAL` and equality between the objective and the bound.
 
-[test_solver.py](../tests/test_solver.py) compare les petits cas à l'énumération exhaustive et contrôle les statuts, les limites numériques et les budgets. La restitution associe la preuve CP-SAT à la vérification indépendante du candidat.
+[test_solver.py](../tests/test_solver.py) compares small cases against exhaustive enumeration and checks status, numerical limits, and budgets. The output associates the CP-SAT proof with independent candidate verification.
 
-## M3 — Vérification indépendante
+<a id="m3--vérification-indépendante"></a>
+## M3 - Independent Verification
 
-[verify.py](../or_agent/verify.py) utilise un calcul arithmétique séparé, sans importer le solveur ni le convertisseur. Il contrôle les identifiants, la couverture exacte des tâches, les charges, les capacités et le coût total. Les violations sont retournées sous une forme structurée.
+[verify.py](../or_agent/verify.py) uses a separate arithmetic computation, without importing the solver or the converter. It controls identifiers, exact task coverage, loads, capacities, and total cost. Violations are returned in a structured format.
 
-[test_verify.py](../tests/test_verify.py) injecte omissions, doublons, identifiants inconnus, dépassements et coûts erronés. Sur l'[exemple fourni](../examples/small.json), le vérificateur retrouve les charges `R1=4`, `R2=2` et le coût `6` ; CP-SAT établit séparément l'optimalité.
+[test_verify.py](../tests/test_verify.py) injects omissions, duplicates, unknown identifiers, overloads, and erroneous costs. On the [provided example](../examples/small.json), the verifier recovers the loads `R1=4`, `R2=2` and the cost `6`; CP-SAT independently establishes optimality.
 
-## M4 — Boucle agent
+<a id="m4--boucle-agent"></a>
+## M4 - Agent loop
 
-[agent.py](../or_agent/agent.py) relie Ollama, décodage, validation, résolution et restitution. La génération a évolué du JSON demandé par instruction vers le schéma structuré et la correction bornée. Les outils d'évaluation conservent les stratégies `json`, `structured` et `structured-repair`.
+[agent.py](../or_agent/agent.py) connects to Ollama, decoding, validation, resolution, and delivery. Generation has evolved from the JSON requested by instruction to a structured schema with bounded correction. Evaluation tools preserve strategies `json`, `structured`, and `structured-repair`.
 
-Le CLI `agent` utilise la génération structurée avec au plus une correction, soit deux appels maximum. Les corrections préservent les données déjà parsées. Les budgets limitent les appels, la durée globale et la résolution ; les observations enregistrent réponses brutes, erreurs, diagnostics et contrôles de ressources.
+The CLI `agent` uses structured generation with at most one correction, i.e., two calls maximum. Corrections preserve already parsed data. Budgets limit calls, total duration, and resolution; observations record raw responses, errors, diagnostics, and resource checks.
 
-Les branches sont couvertes par [test_agent.py](../tests/test_agent.py) avec des réponses contrôlées, et un pilote Ollama réel a été exécuté en CLI. Ce parcours résout directement une extraction validée ; l'admission humaine est portée par `route` et le web.
+Branches are covered by [test_agent.py](../tests/test_agent.py) with controlled responses, and a real Ollama pilot has been executed in CLI. This path directly resolves a validated extraction; human oversight is provided by `route` and the web.
 
-## M5 — Évaluation
+<a id="m5--évaluation"></a>
+## M5 - Evaluation
 
-Le [corpus initial](../data/benchmark.json) contient **16 cas : 7 de développement et 9 de test**. Le [corpus étendu](../data/extended-benchmark.json) contient **130 cas : 30 de développement et 100 de test**. Ils couvrent instances faisables et infaisables, coûts négatifs, consommations nulles, ambiguïtés et demandes hors périmètre.
+The [initial corpus](../data/benchmark.json) contains **16 cases: 7 development and 9 test**. The [extended corpus](../data/extended-benchmark.json) contains **130 cases: 30 development and 100 test**. They cover feasible and infeasible instances, negative costs, zero consumption, ambiguities, and out-of-scope requests.
 
-Les outils d'évaluation séparent préparation, exécution et relecture des mesures. Les audits contrôlent empreintes, références et séparation des familles. Pour les **105 instances complètes** du corpus étendu, ils vérifient les références, la résolution CP-SAT et la reconstruction depuis la source. Les résultats absents restent comptés dans les dénominateurs.
+Evaluation tools separate preparation, execution, and re-reading of measures. Audits control footprints, references, and family separations. For the **105 complete instances** in the extended corpus, they verify references, CP-SAT resolution, and reconstruction from source. Missing results remain counted in the denominators.
 
-Les évaluations historiques ont relevé des omissions, associations erronées et transpositions, sans réponse finale correcte récupérée par réparation automatique. Le pilote web a produit six formulations incomplètes et une complète erronée sur sept sources GAP complètes, soit **0/7 formulation complète et fidèle**. Ces observations motivent la revue explicite décrite ci-dessous, sans constituer une mesure générale de fiabilité.
+Historical evaluations have identified omissions, erroneous associations, and transpositions, without any final correct response recovered through automatic repair. The web pilot produced six incomplete formulations and one fully erroneous formulation out of seven complete GAP sources, i.e., **0/7 complete and faithful formulations**. These observations motivate the explicit review described below, without constituting a general reliability measure.
 
-## Pourquoi le HITL a été introduit
+<a id="pourquoi-le-hitl-a-été-introduit"></a>
+## Why HITL was introduced
 
-La génération d'une formulation structurée ne suffit pas à garantir sa fidélité à l'énoncé. OR-Agent utilise donc une revue humaine explicite avant d'autoriser les résolutions du parcours HITL. Le relecteur compare la source, les données et les contraintes ; son approbation autorise la révision examinée.
+Structured generation alone is insufficient to guarantee fidelity to the original statement. OR-Agent therefore employs explicit human review before authorizing any HITL path resolution. The reviewer compares the source, data, and constraints; their approval authorizes the examined revision.
 
-## Implémentation du HITL
+<a id="implémentation-du-hitl"></a>
+## HITL Implementation
 
-[hitl.py](../or_agent/hitl.py) définit le format `HITL-GAP: 1` : objectif, inventaires, unités, capacités et un enregistrement par couple tâche–ressource. Une valeur inconnue est représentée par `?` et bloque la complétude ; les lignes `Issue:` portent les diagnostics.
+[hitl.py](../or_agent/hitl.py) defines the schema `HITL-GAP: 1`: objective, inventories, units, capacities, and a record per task-resource pair. An unknown value is represented by `?` and blocks completeness; lines `Issue:` contain diagnostics.
 
-Le parcours conserve la demande originale et enchaîne :
+The path preserves the original request and proceeds with:
 
-1. Proposition manuelle ou Ollama, puis correction du brouillon.
-2. Validation de la syntaxe, de la couverture et des données.
-3. Revue de la source, de la proposition et des matrices reconstruites.
-4. Confirmation de la portée GAP lorsque le parcours la demande.
-5. Approbation explicite de la révision relue.
-6. Résolution du GAP approuvé et vérification du candidat.
+1. Manual proposal or Ollama, followed by correction of the draft.
+2. Syntax validation, coverage, and data validation.
+3. Review of the source, the proposal, and reconstructed matrices.
+4. Confirmation of the GAP scope when the path requests it.
+5. Explicit approval of the reviewed revision.
+6. Resolution of the approved GAP and verification of the candidate.
 
-Les sessions conservent `original.txt`, `proposal.txt`, `session.json`, diagnostics et événements. L'approbation lie les empreintes de la source et de la proposition ; les éléments approuvés sont conservés sous `approved/`. Une modification invalide la revue, la confirmation et l'approbation.
+Sessions preserve `original.txt`, `proposal.txt`, `session.json`, diagnostics, and events. Approval links the source and proposal fingerprints; approved elements are stored under `approved/`. A modification invalidates the review, confirmation, and approval.
 
-Le CLI utilise les confirmations `SCOPE:<review-token>` et `APPROVE:<review-token>`. Le LLM ne peut pas accorder ces autorisations. [test_hitl.py](../tests/test_hitl.py) vérifie corrections, rejets, inconnues et refus de résolution avec autorisation absente ou périmée.
+The CLI uses confirmations `SCOPE:<review-token>` and `APPROVE:<review-token>`. The LLM cannot grant these authorizations. [test_hitl.py](../tests/test_hitl.py) verifies corrections, rejections, unknowns, and resolution refusals with missing or expired authorization.
 
-## Extraction et routage déterministes
+<a id="extraction-et-routage-déterministes"></a>
+## Deterministic extraction and routing
 
-[deterministic.py](../or_agent/deterministic.py) extrait des faits associés à un champ, une tâche, une ressource, une valeur, une unité, une citation et des positions dans la source. Les positions suivent les indices de caractères Python, avec intervalle `[start, end)`.
+[deterministic.py](../or_agent/deterministic.py) extracts facts associated with a field, a task, a resource, a value, a unit, a citation, and positions in the source. Positions follow Python character indices, with interval `[start, end)`.
 
-[routing.py](../or_agent/routing.py) reconstruit le GAP et contrôle inventaires, unités, couverture numérique et textuelle, contraintes standard, absence de contradictions et concordance canonique. Le certificat `VERIFIED_COMPLETE` autorise la branche `AUTONOMOUS`, sans LLM ni revue, uniquement pour les formats fermés reconnus. Les autres certificats orientent vers le contrôle humain ou signalent un bloqueur.
+[routing.py](../or_agent/routing.py) reconstructs the GAP and controls inventories, units, numerical and textual coverage, standard constraints, absence of contradictions, and canonical consistency. Certificate `VERIFIED_COMPLETE` authorizes branch `AUTONOMOUS`, without LLM or review, only for recognized closed formats. Other certificates route to human oversight or signal a blocker.
 
-Le brouillon manuel reprend les faits individuellement vérifiés et laisse les données manquantes à `?`. La prose non reconnue exige une confirmation explicite du périmètre. Les contradictions et exclusions détectées dans la source persistent après réécriture du brouillon ; corriger la source exige une nouvelle session. [test_routing.py](../tests/test_routing.py) couvre certificats, reconstruction et admission.
+The manual draft reiterates individually verified facts and leaves missing data at `?`. Unrecognized prose requires explicit scope confirmation. Contradictions and exclusions detected in the source persist after redrafting the manual draft; correcting the source requires a new session. [test_routing.py](../tests/test_routing.py) covers certificates, reconstruction, and admission.
 
-## Interface web
+<a id="interface-web"></a>
+## Web interface
 
-[web.py](../or_agent/web.py) réutilise les services de routage, HITL, résolution et vérification. L'interface HTML/CSS/JavaScript présente source, faits, diagnostics, formulation et résultats sans build frontend. Les événements SSE suivent les étapes du traitement.
+[web.py](../or_agent/web.py) reuses routing, HITL, resolution, and verification services. The HTML/CSS/JavaScript interface presents source, facts, diagnostics, formulation, and results without frontend build. SSE events follow the processing steps.
 
-Les sessions persistent dans `.or-agent-web/` et restent consultables après redémarrage sans relancer les calculs. Les visualisations montrent affectations et capacités ; les exports SVG, HTML et JSON sont liés à la révision courante. Les sessions importées sont autorisées au démarrage et consultées en lecture seule.
+Sessions persist in `.or-agent-web/` and remain accessible after restart without re-executing calculations. Visualizations show assignments and capacities; SVG, HTML, and JSON exports are tied to the current revision. Imported sessions are authorized at startup and accessed in read-only mode.
 
-Le serveur local mono-utilisateur contrôle l'origine des mutations et l'accès aux fichiers de sessions. La génération facultative vérifie le digest du modèle Ollama et les ressources disponibles ; le brouillon manuel reste accessible sans Ollama.
+The single-user local server controls the origin of mutations and access to session files. Optional generation verifies the Ollama model digest and available resources; the manual draft remains accessible without Ollama.
 
-[test_web.py](../tests/test_web.py) couvre les services HTTP, les autorisations, la suppression et la protection des fichiers. [web_browser.mjs](../tests/web_browser.mjs) exerce les parcours déterministe et HITL dans Chrome, avec CP-SAT et vérificateur réels, génération et approbations contrôlées.
+[test_web.py](../tests/test_web.py) covers HTTP services, authorizations, file deletion, and file protection. [web_browser.mjs](../tests/web_browser.mjs) executes deterministic and HITL workflows in Chrome, with real CP-SAT and verifier, controlled generation, and approvals.
 
-## Bilan des fonctionnalités et validations V1
+<a id="bilan-des-fonctionnalités-et-validations-v1"></a>
+## Feature overview and V1 validations
 
-La V1 réunit contrat GAP strict, extraction et routage déterministes, génération locale facultative, revue HITL, résolution CP-SAT, vérification indépendante, CLI, sessions web, visualisations et exports.
+The project integrates a strict GAP contract, deterministic extraction and routing, optional local generation, HITL review, CP-SAT resolution, independent verification, CLI, web sessions, visualizations, and exports.
 
-Les validations techniques réalisées comprennent :
+Technical validations include: **864 successful tests, zero failures, and zero ignored tests** during final validation under Windows.
 
-- **864 tests réussis, zéro échec et zéro test ignoré** lors de la validation finale sous Windows.
-- Parcours Chrome déterministe et HITL : autorisations, invalidation après édition, persistance, visualisations et cohérence des exports JSON/SVG/HTML, aux largeurs **1440, 1280 et 390 px**, avec actions mobiles.
-- Installations Windows sous Python 3.13 et Linux Ubuntu WSL2 sous Python 3.12, avec dépendances figées, installation éditable, exemples et audits hors ligne. Les parcours Chrome ont été validés sous Windows.
-- Imports, compilation des sources, cohérence des dépendances, commandes CLI et audits des deux corpus.
+- The V1 unites strict GAP contract, deterministic extraction and routing, optional local generation, HITL review, CP-SAT resolution, independent verification, CLI, web sessions, visualizations, and exports.
+- Deterministic Chrome trajectory with HITL: authorizations, invalidation after editing, persistence, visualizations and consistency of JSON/SVG/HTML exports at widths **1440, 1280 and 390 px**, with mobile actions.
+- Installations on Windows under Python 3.13 and Linux Ubuntu WSL2 under Python 3.12, with fixed dependencies, editable installation, examples, and offline audits. Chrome trajectories have been validated on Windows.
+- Imports, compilation of sources, consistency of dependencies, CLI commands, and audits of both corpora.
 
-Les contrôles historiques après reconstruction des propositions par l'investigateur et approbation humaine ont obtenu six optima **15, 2, −7, 5, 55 et 56**, avec candidats vérifiés, et une infaisabilité conforme à l'énumération. Les 21 contrôles d'exports JSON/SVG/HTML associés ont réussi. Les trois contrôles déterministes distincts ont donné les optima **6 et −5**, vérifiés, et une infaisabilité conforme.
+Historical controls after reconstruction of proposals by the investigator and human approval have yielded six optima **15, 2, −7, 5, 55 and 56**, with verified candidates, and feasibility consistent with enumeration. The 21 associated export JSON/SVG/HTML controls have succeeded. The three distinct deterministic controls have produced the optima **6 and −5**, verified, and feasibility consistent.
 
-**V1 terminée sur son périmètre fonctionnel et technique.**
+**V1 completed within its functional and technical scope.**

@@ -1,27 +1,27 @@
-[Français](memory.md) | [简体中文](memory.zh-CN.md)
+[English](memory.md) | [Français](memory.fr.md) | [简体中文](memory.zh-CN.md)
 
 <a id="or-agent--mémoire-technique-du-projet"></a>
-# OR-Agent — 项目技术文档
+# OR-Agent - 项目技术文档
 
 本文档记录了OR-Agent的技术成果与决策。[README](../README.zh-CN.md)介绍了产品及其命令；[roadmap](roadmap.zh-CN.md)保留了已完成的关键节点。
 
 <a id="m0--cadrage-gap"></a>
-## M0 — 间隙对齐
+## M0 - 间隙对齐
 
 项目规定每项任务必须明确且不可分割地分配至某一资源。对于资源`i`和任务`j`，`x[i,j]`是二元变量，`c[i,j]`是成本，`a[i,j]`是消耗量，`b[i]`是容量：
 
 ```text
-Minimiser : somme(i,j) c[i,j] * x[i,j]
-Sous contraintes :
-    pour chaque tâche j : somme(i) x[i,j] = 1
-    pour chaque ressource i : somme(j) a[i,j] * x[i,j] <= b[i]
-    x[i,j] appartient à {0, 1}
+最小化：sum(i,j) c[i,j] * x[i,j]
+约束条件：
+    对于每个任务 j：sum(i) x[i,j] = 1
+    对于每个资源 i：sum(j) a[i,j] * x[i,j] <= b[i]
+    x[i,j] 属于 {0, 1}
 ```
 
 该完整合约允许在求解器中构建并控制模型，无需额外解释。[GAP范围](../README.zh-CN.md#problème-gap-pris-en-charge)定义了边界、单位和可接受的约束。模型的验证、与源数据的一致性、可行性及最优性是四个独立的控制环节。
 
 <a id="m1--validation-et-représentation"></a>
-## M1 — 验证与表示
+## M1 - 验证与表示
 
 [models.py](../or_agent/models.py) 提供了CLI、代理和求解器之间的通用合约：`Gap`用于数据，`Extraction`用于配置`ready`、`clarify`、`unsupported`和`invalid`，以及`Candidate`用于分配和声明的成本。
 
@@ -30,7 +30,7 @@ Pydantic要求模型严格且封闭。资源占据矩阵的行，任务占据矩
 一个提取`ready`要求完整问题、无阻塞诊断，并为GAP中每个七个字段提供源文本的精确引用。其他配置项要求解释说明，不包含需要求解的问题。有效案例与拒绝案例由[test_models.py](../tests/test_models.py)覆盖。
 
 <a id="m2--résolution-cp-sat"></a>
-## M2 — CP-SAT求解
+## M2 - CP-SAT求解
 
 [solver.py](../or_agent/solver.py) 构建二元变量、唯一分配、容量和目标。大语言模型提供数据，绝不提供可执行代码给求解器。
 
@@ -39,14 +39,14 @@ CP-SAT使用一个工作进程、固定种子和零最优容差。默认预算�
 [test_solver.py](../tests/test_solver.py) 将小规模案例与穷举法对比，并验证状态、数值边界和预算。结果将CP-SAT的证明与候选解的独立验证关联起来。
 
 <a id="m3--vérification-indépendante"></a>
-## M3 — 独立验证
+## M3 - 独立验证
 
 [verify.py](../or_agent/verify.py) 使用独立的算术计算，不导入求解器或转换器。它验证标识符、任务覆盖的精确性、负载、容量和总成本。违规情况以结构化形式返回。
 
 [test_verify.py](../tests/test_verify.py) 注入遗漏、重复、未知标识符、超限和错误成本。在[提供的示例](../examples/small.json)中，验证器发现负载`R1=4`、`R2=2`和成本`6`；CP-SAT独立地建立了最优性。
 
 <a id="m4--boucle-agent"></a>
-## M4 — 代理循环
+## M4 - 代理循环
 
 [agent.py](../or_agent/agent.py) 集成 Ollama，实现解码、验证、求解与输出。生成过程已从指令要求的 JSON 格式演进为结构化模式和有界修正。评估工具保留了 `json`、`structured` 和 `structured-repair` 策略。
 
@@ -55,7 +55,7 @@ CLI 工具 `agent` 采用结构化生成，最多一次修正，即最多两次�
 分支由 [test_agent.py](../tests/test_agent.py) 以受控响应覆盖，并在 CLI 中执行了真实的 Ollama 驱动。该流程直接解决一个已验证的提取任务；人工介入由 `route` 和网页实现。
 
 <a id="m5--évaluation"></a>
-## M5 — 评估
+## M5 - 评估
 
 初始语料库 [corpus initial](../data/benchmark.json) 包含 **16 个案例：7 个开发案例和 9 个测试案例**。扩展语料库 [corpus étendu](../data/extended-benchmark.json) 包含 **130 个案例：30 个开发案例和 100 个测试案例**。它们覆盖了可执行与不可执行实例、负成本、零消耗、歧义以及超出范围的请求。
 
