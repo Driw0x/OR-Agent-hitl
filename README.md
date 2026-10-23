@@ -1,5 +1,8 @@
 # OR-Agent
 
+[Français](README.md) | [简体中文](README.zh-CN.md)
+
+
 Application locale pour structurer, résoudre et vérifier des problèmes d'affectation sous capacités.
 
 ## Présentation

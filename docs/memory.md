@@ -1,5 +1,8 @@
 # OR-Agent — Mémoire technique du projet
 
+[Français](memory.md) | [简体中文](memory.zh-CN.md)
+
+
 Cette mémoire retrace les réalisations et les décisions techniques d'OR-Agent. Le [README](../README.md) présente le produit et les commandes ; la [roadmap](roadmap.md) conserve les checkpoints réalisés.
 
 ## M0 — Cadrage GAP

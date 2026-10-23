@@ -1,5 +1,8 @@
 # OR-Agent — Roadmap et checkpoints de validation
 
+[Français](roadmap.md) | [简体中文](roadmap.zh-CN.md)
+
+
 Cette roadmap retrace les milestones et les checkpoints réalisés. Le [README](../README.md) présente le produit et son utilisation ; la [mémoire technique](memory.md) explique les choix d'implémentation.
 
 ## M0 — Cadrage GAP
