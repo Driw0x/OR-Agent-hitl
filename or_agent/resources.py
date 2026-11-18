@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import shutil
+import sys
 import time
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -38,6 +39,68 @@ class WaitBudget:
             raise ValueError("used_seconds exceeds the campaign allowance")
 
 
+def _linux_snapshot(proc: Path = Path("/proc")) -> dict:
+    result = {key: None for key in (
+        "ram_total_bytes", "ram_available_bytes", "commit_total_bytes",
+        "commit_limit_bytes", "commit_available_bytes", "memory_status_commit_limit_bytes",
+        "memory_status_commit_available_bytes", "pagefile_usage_bytes", "paging_activity_bytes_per_second",
+        "cpu_percent", "process_count", "cpu_intensive_process_count",
+    )}
+    diagnostics = result["diagnostics"] = []
+    try:
+        fields = {}
+        for line in (proc / "meminfo").read_text(encoding="utf-8").splitlines():
+            name, separator, value = line.partition(":")
+            if separator:
+                fields[name] = int(value.split()[0]) * 1024
+        total = fields["MemTotal"]
+        available = fields["MemAvailable"]
+        result.update(ram_total_bytes=total, ram_available_bytes=available)
+    except (OSError, KeyError, ValueError, IndexError) as error:
+        diagnostics.append(f"/proc/meminfo: {error}")
+
+    try:
+        policy = int((proc / "sys/vm/overcommit_memory").read_text(encoding="ascii").strip())
+        if policy not in {0, 1, 2}:
+            raise ValueError(f"unexpected overcommit mode {policy}")
+        result["commit_limit_enforced"] = policy == 2
+        result["overcommit_mode"] = policy
+        if policy == 2:
+            limit = fields["CommitLimit"]
+            committed = fields["Committed_AS"]
+            result.update(commit_total_bytes=committed, commit_limit_bytes=limit,
+                          commit_available_bytes=max(0, limit - committed))
+        else:
+            diagnostics.append(f"Linux overcommit mode {policy} has no strict commit limit")
+    except (OSError, KeyError, ValueError) as error:
+        result["commit_limit_enforced"] = None
+        diagnostics.append(f"Linux overcommit policy: {error}")
+
+    def cpu_times():
+        line = (proc / "stat").read_text(encoding="ascii").splitlines()[0].split()
+        if not line or line[0] != "cpu":
+            raise ValueError("aggregate CPU row is missing")
+        values = [int(value) for value in line[1:]]
+        return sum(values), values[3] + (values[4] if len(values) > 4 else 0)
+
+    try:
+        first_total, first_idle = cpu_times()
+        time.sleep(0.1)
+        last_total, last_idle = cpu_times()
+        elapsed = last_total - first_total
+        if elapsed <= 0:
+            raise ValueError("CPU sampling interval returned no elapsed time")
+        result["cpu_percent"] = max(0.0, min(100.0, 100 * (elapsed - last_idle + first_idle) / elapsed))
+    except (OSError, ValueError, IndexError) as error:
+        diagnostics.append(f"/proc/stat: {error}")
+    try:
+        result["process_count"] = sum(path.name.isdigit() for path in proc.iterdir())
+    except OSError as error:
+        diagnostics.append(f"/proc process count: {error}")
+    diagnostics.append("Per-process CPU intensity is not measured; no external process is changed")
+    return result
+
+
 def _native_snapshot() -> dict:
     result = {key: None for key in (
         "ram_total_bytes", "ram_available_bytes", "commit_total_bytes",
@@ -47,7 +110,11 @@ def _native_snapshot() -> dict:
     )}
     diagnostics = result["diagnostics"] = []
     if os.name != "nt":
+        if sys.platform.startswith("linux") and os.getenv("OR_AGENT_LINUX_NATIVE") == "1":
+            return _linux_snapshot()
         diagnostics.append("Native Windows monitoring is unavailable on this platform")
+        if sys.platform.startswith("linux"):
+            diagnostics.append("Set OR_AGENT_LINUX_NATIVE=1 only when OR-Agent and Ollama share the Linux host limits")
         return result
 
     from ctypes import wintypes
@@ -211,20 +278,24 @@ def gate(model: str, base_url: str = "http://localhost:11434", *,
         estimated = GIB if reused else full_estimated
         total, available = current.get("ram_total_bytes"), current.get("ram_available_bytes")
         commit_limit, commit_available = current.get("commit_limit_bytes"), current.get("commit_available_bytes")
+        commit_enforced = current.get("commit_limit_enforced", True)
         if not all(type(v) is int and v >= 0 for v in (total, available)) or total <= 0 or available > total:
             return result(False, "ram_unknown")
-        if not all(type(v) is int and v >= 0 for v in (commit_limit, commit_available)) or commit_limit <= 0 or commit_available > commit_limit:
+        if commit_enforced is None or type(commit_enforced) is not bool:
+            return result(False, "commit_policy_unknown")
+        if commit_enforced and (not all(type(v) is int and v >= 0 for v in (commit_limit, commit_available))
+                                or commit_limit <= 0 or commit_available > commit_limit):
             return result(False, "commit_unknown")
         margin = max(GIB, (total + 9) // 10)
         needed = estimated + margin
         if needed > total:
             return result(False, "structural_ram_limit", "ram")
-        if needed > commit_limit:
+        if commit_enforced and needed > commit_limit:
             return result(False, "structural_commit_limit", "commit")
         cpu = current.get("cpu_percent")
         if available < needed:
             pressure = "ram"
-        elif commit_available < needed:
+        elif commit_enforced and commit_available < needed:
             pressure = "commit"
         elif isinstance(cpu, (int, float)) and not isinstance(cpu, bool) and math.isfinite(cpu) and cpu >= 95:
             pressure = "cpu"

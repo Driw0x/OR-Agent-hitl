@@ -247,6 +247,14 @@ The web uses `http://127.0.0.1:11434` by default; `--base-url` allows selecting 
 
 Resource controls may reject generation or interrupt client-side waiting. A client timeout does not guarantee cancellation of computation in Ollama. The commands `resources` and `ollama` expose available diagnostics; manual input remains usable if generation is unavailable.
 
+Windows resource monitoring works without configuration. Native Linux hosts can enable the equivalent checks with `OR_AGENT_LINUX_NATIVE=1` when OR-Agent and Ollama share the same host limits:
+
+```bash
+OR_AGENT_LINUX_NATIVE=1 .venv/bin/python -B -m or_agent web
+```
+
+Linux admission reads RAM, CPU and overcommit policy from `/proc`. Strict commit capacity is enforced when `vm.overcommit_memory=2`; modes `0` and `1` use the measured available-RAM check. Containers and cgroup limits are not supported by this switch.
+
 <a id="tests"></a>
 ## Tests
 

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .models import Candidate, Extraction, load_json, read_gap
+from .models import Extraction, load_json, read_gap
 
 
 def main():

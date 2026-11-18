@@ -708,7 +708,7 @@ def test_browser_session_deletion_and_combined_approval(app, tmp_path):
         return dict(allowed=len(admissions) > 1, reason='Controlled Ollama unavailable')
     app[0].client, app[0].admission = client, admission
     readme = Path('README.md').read_text(encoding='utf-8')
-    example = readme.split('### Exemple sans LLM', 1)[1].split('```text\n', 1)[1].split('```', 1)[0].strip()
+    example = readme.split('<a id="exemple-sans-llm"></a>', 1)[1].split('```text\n', 1)[1].split('```', 1)[0].strip()
     fixtures = tmp_path/'browser-fixtures.json'
     fixtures.write_text(json.dumps(dict(source=example, prose=web.PROSE, proposal=hitl.FORMAT,
         problem=load(Path('examples/small.json').read_text(encoding='utf-8')))), encoding='utf-8')

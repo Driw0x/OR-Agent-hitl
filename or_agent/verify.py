@@ -12,6 +12,8 @@ def verify(problem: Gap, candidate: Candidate | dict) -> dict:
     violations = []
     counts = {task: 0 for task in problem.tasks}
     loads = {resource: 0 for resource in problem.resources}
+    task_indices = {task: i for i, task in enumerate(problem.tasks)}
+    resource_indices = {resource: i for i, resource in enumerate(problem.resources)}
     total = 0
     for assignment in candidate.assignments:
         task, resource = assignment.task, assignment.resource
@@ -22,7 +24,7 @@ def verify(problem: Gap, candidate: Candidate | dict) -> dict:
         if resource not in loads:
             violations.append(dict(kind="unknown_resource", resource=resource))
         if task in counts and resource in loads:
-            i, j = problem.resources.index(resource), problem.tasks.index(task)
+            i, j = resource_indices[resource], task_indices[task]
             loads[resource] += problem.consumption[i][j]
             total += problem.costs[i][j]
     for task, count in counts.items():

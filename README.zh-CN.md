@@ -245,6 +245,14 @@ Web 默认使用 `http://127.0.0.1:11434`；`--base-url` 可用于选择其他�
 
 资源限制控制可能会拒绝生成或中断客户端等待。客户端超时并不能保证 Ollama 中计算的取消。命令 `resources` 和 `ollama` 提供了可用的诊断信息；如果生成不可用，手动输入仍然可用。
 
+Windows 资源监控无需配置即可使用。在原生 Linux 主机上，如果 OR-Agent 与 Ollama 共享同一组主机资源限制，可通过 `OR_AGENT_LINUX_NATIVE=1` 启用等效检查：
+
+```bash
+OR_AGENT_LINUX_NATIVE=1 .venv/bin/python -B -m or_agent web
+```
+
+Linux 准入检查从 `/proc` 读取内存、CPU 和 overcommit 策略。当 `vm.overcommit_memory=2` 时检查严格的 commit 容量；模式 `0` 和 `1` 使用实测可用内存。本选项不支持容器或 cgroup 限制。
+
 <a id="tests"></a>
 ## 测试
 

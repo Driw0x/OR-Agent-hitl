@@ -76,7 +76,7 @@ Objectif : évaluer les formulations et les réponses finales à partir de réf�
 - [x] Réaliser les évaluations historiques initiale, étendue et indépendante.
 - [x] Analyser les omissions, associations erronées, transpositions et corrections.
 
-Validation : corpus couverts par [test_benchmark_data.py](../tests/test_benchmark_data.py) et [test_extended_corpus.py](../tests/test_extended_corpus.py), protocoles et métriques par les tests d'évaluation. **Statut : évaluation exploratoire réalisée.** Les résultats utiles aux décisions sont résumés dans la [mémoire](memory.fr.md#m5--évaluation).
+Validation : corpus couverts par [test_benchmark_data.py](../tests/test_benchmark_data.py) et [test_extended_corpus.py](../tests/test_extended_corpus.py), protocoles et métriques par les tests d'évaluation. **Statut : évaluation exploratoire réalisée.** Les résultats utiles aux décisions sont résumés dans la [mémoire](memory.fr.md#m5---évaluation).
 
 ## Extensions - Routage déterministe et HITL
 

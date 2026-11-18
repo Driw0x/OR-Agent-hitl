@@ -8,7 +8,6 @@ import re
 import time
 
 from . import agent, deterministic, hitl
-from .crosscheck import gap_facts
 from .extended_evaluate import campaign_lock
 from .models import Gap, load_json
 from .resources import WaitBudget, gate

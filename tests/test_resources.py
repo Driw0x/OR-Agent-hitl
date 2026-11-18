@@ -2,10 +2,11 @@
 
 from copy import deepcopy
 import json
+from pathlib import Path
 
 import pytest
 
-from or_agent.resources import GIB, WaitBudget, gate, snapshot
+from or_agent.resources import GIB, WaitBudget, _linux_snapshot, _native_snapshot, gate, snapshot
 
 
 def healthy():
@@ -37,6 +38,64 @@ def test_immediate_admission_and_model_estimate(clock):
     assert report["safety_margin_bytes"] == (32 * GIB + 9) // 10
     assert report["wait_seconds"] == 0 and sleeps == []
     json.dumps(report, allow_nan=False)
+
+
+def test_linux_native_snapshot_reads_proc_and_strict_commit_limit(tmp_path, monkeypatch):
+    (tmp_path / "sys/vm").mkdir(parents=True)
+    (tmp_path / "meminfo").write_text(
+        "MemTotal: 33554432 kB\nMemAvailable: 20971520 kB\n"
+        "CommitLimit: 50331648 kB\nCommitted_AS: 16777216 kB\n", encoding="utf-8")
+    (tmp_path / "sys/vm/overcommit_memory").write_text("2\n", encoding="ascii")
+    readings = iter(("cpu 100 0 50 850 0\n", "cpu 130 0 70 900 0\n"))
+    read_text = Path.read_text
+    monkeypatch.setattr(Path, "read_text", lambda path, **kwargs:
+                        next(readings) if path == tmp_path / "stat"
+                        else read_text(path, **kwargs))
+    monkeypatch.setattr("or_agent.resources.time.sleep", lambda _: None)
+
+    report = _linux_snapshot(tmp_path)
+
+    assert report["ram_total_bytes"] == 32 * GIB
+    assert report["ram_available_bytes"] == 20 * GIB
+    assert report["commit_limit_bytes"] == 48 * GIB
+    assert report["commit_available_bytes"] == 32 * GIB
+    assert report["commit_limit_enforced"] is True
+    assert report["cpu_percent"] == 50
+
+
+@pytest.mark.parametrize("mode", [0, 1])
+def test_linux_overcommit_without_strict_limit_uses_ram_only(tmp_path, monkeypatch, mode):
+    (tmp_path / "sys/vm").mkdir(parents=True)
+    (tmp_path / "meminfo").write_text(
+        "MemTotal: 33554432 kB\nMemAvailable: 20971520 kB\n", encoding="utf-8")
+    (tmp_path / "sys/vm/overcommit_memory").write_text(str(mode), encoding="ascii")
+    readings = iter(("cpu 0 0 0 100\n", "cpu 5 0 5 190\n"))
+    read_text = Path.read_text
+    monkeypatch.setattr(Path, "read_text", lambda path, **kwargs:
+                        next(readings) if path == tmp_path / "stat"
+                        else read_text(path, **kwargs))
+    monkeypatch.setattr("or_agent.resources.time.sleep", lambda _: None)
+    state = _linux_snapshot(tmp_path)
+    state.update(disk_free_bytes=GIB, ollama=healthy()["ollama"])
+
+    assert gate("tiny", snapshot_fn=lambda: state)["allowed"]
+    assert state["commit_limit_enforced"] is False
+
+
+def test_unknown_linux_overcommit_policy_fails_closed():
+    state = healthy()
+    state["commit_limit_enforced"] = None
+    assert gate("tiny", snapshot_fn=lambda: state)["reason"] == "commit_policy_unknown"
+
+
+def test_linux_native_monitoring_requires_explicit_shared_host_opt_in(monkeypatch):
+    monkeypatch.setattr("or_agent.resources.os.name", "posix")
+    monkeypatch.setattr("or_agent.resources.sys.platform", "linux")
+    monkeypatch.delenv("OR_AGENT_LINUX_NATIVE", raising=False)
+    assert _native_snapshot()["ram_total_bytes"] is None
+    monkeypatch.setenv("OR_AGENT_LINUX_NATIVE", "1")
+    monkeypatch.setattr("or_agent.resources._linux_snapshot", lambda: {"ram_total_bytes": 123})
+    assert _native_snapshot() == {"ram_total_bytes": 123}
 
 
 def test_resident_model_reserves_incremental_memory_only(clock):
